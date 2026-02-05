@@ -163,5 +163,52 @@ export async function checkHealth() {
   return apiGet('/health');
 }
 
+// ============================================
+// Public API (no authentication required)
+// ============================================
+
+/**
+ * Get public stats for landing page
+ */
+export async function getPublicStats() {
+  return apiGet('/public/stats');
+}
+
+/**
+ * Get membership tiers information
+ */
+export async function getMembershipTiers() {
+  return apiGet('/public/membership-tiers');
+}
+
+// ============================================
+// Application API
+// ============================================
+
+/**
+ * Submit membership application
+ */
+export async function submitApplication(applicationData) {
+  return apiPost('/applications', applicationData);
+}
+
+/**
+ * Upload application document
+ */
+export async function uploadApplicationDocument(file, documentType, email) {
+  const formData = new FormData();
+  formData.append('file', file);
+  formData.append('document_type', documentType);
+  formData.append('application_email', email);
+  return apiUpload('/applications/upload-document', formData);
+}
+
+/**
+ * Get application status
+ */
+export async function getApplicationStatus(applicationNumber) {
+  return apiGet(`/applications/${applicationNumber}`);
+}
+
 // Export the base URL for use in other places
 export { API_BASE_URL };
