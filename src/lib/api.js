@@ -163,5 +163,23 @@ export async function checkHealth() {
   return apiGet('/health');
 }
 
+// ============================================
+// Public API (no authentication required)
+// ============================================
+
+/**
+ * Get public stats for landing page
+ */
+export async function getPublicStats() {
+  return apiGet('/public/stats');
+}
+
+/**
+ * Get membership tiers information
+ */
+export async function getMembershipTiers() {
+  return apiGet('/public/membership-tiers');
+}
+
 // Export the base URL for use in other places
 export { API_BASE_URL };
