@@ -187,7 +187,7 @@ export default function LoginPage() {
           {/* Additional Links */}
           <div className="mt-6 text-center">
             <a
-              href="#"
+              href="/forgot-password"
               className="text-sm font-medium transition-colors"
               style={{ color: 'var(--brand-primary)' }}
               onMouseEnter={(e) => {

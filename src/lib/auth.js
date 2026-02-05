@@ -21,10 +21,10 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
 
         try {
           // Call backend login endpoint
-          const response = await apiPost("/auth/login", {
-            email: credentials.email,
-            password: credentials.password,
-          });
+          const response = await apiPost("/login", { 
+  email: credentials.email,
+  password: credentials.password,
+});
 
           // Backend should return user data and token
           // Handle different possible response formats
