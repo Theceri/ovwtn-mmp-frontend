@@ -181,5 +181,34 @@ export async function getMembershipTiers() {
   return apiGet('/public/membership-tiers');
 }
 
+// ============================================
+// Application API
+// ============================================
+
+/**
+ * Submit membership application
+ */
+export async function submitApplication(applicationData) {
+  return apiPost('/applications', applicationData);
+}
+
+/**
+ * Upload application document
+ */
+export async function uploadApplicationDocument(file, documentType, email) {
+  const formData = new FormData();
+  formData.append('file', file);
+  formData.append('document_type', documentType);
+  formData.append('application_email', email);
+  return apiUpload('/applications/upload-document', formData);
+}
+
+/**
+ * Get application status
+ */
+export async function getApplicationStatus(applicationNumber) {
+  return apiGet(`/applications/${applicationNumber}`);
+}
+
 // Export the base URL for use in other places
 export { API_BASE_URL };
