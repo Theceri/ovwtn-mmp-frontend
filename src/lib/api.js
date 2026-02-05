@@ -20,14 +20,16 @@ export class ApiError extends Error {
  * Make an API request
  * @param {string} endpoint - API endpoint (without base URL)
  * @param {Object} options - Fetch options
+ * @param {string} authToken - Optional auth token to include in headers
  * @returns {Promise<any>} Response data
  */
-async function apiRequest(endpoint, options = {}) {
+async function apiRequest(endpoint, options = {}, authToken = null) {
   const url = `${API_BASE_URL}${endpoint}`;
   
   const config = {
     headers: {
       'Content-Type': 'application/json',
+      ...(authToken && { Authorization: `Bearer ${authToken}` }),
       ...options.headers,
     },
     ...options,
@@ -70,56 +72,80 @@ async function apiRequest(endpoint, options = {}) {
 }
 
 /**
+ * Get auth token helper - can be used by components to pass token to API calls
+ * This is a client-side only function
+ */
+export function getAuthToken() {
+  if (typeof window === 'undefined') return null;
+  
+  try {
+    // Try to get from Zustand store
+    const { useAuthStore } = require('@/store/useAuthStore');
+    const token = useAuthStore.getState().token;
+    if (token) return token;
+  } catch (e) {
+    // Store not available
+  }
+  
+  return null;
+}
+
+/**
  * GET request
  */
-export async function apiGet(endpoint, options = {}) {
+export async function apiGet(endpoint, options = {}, authToken = null) {
+  const token = authToken || getAuthToken();
   return apiRequest(endpoint, {
     method: 'GET',
     ...options,
-  });
+  }, token);
 }
 
 /**
  * POST request
  */
-export async function apiPost(endpoint, data, options = {}) {
+export async function apiPost(endpoint, data, options = {}, authToken = null) {
+  const token = authToken || getAuthToken();
   return apiRequest(endpoint, {
     method: 'POST',
     body: JSON.stringify(data),
     ...options,
-  });
+  }, token);
 }
 
 /**
  * PUT request
  */
-export async function apiPut(endpoint, data, options = {}) {
+export async function apiPut(endpoint, data, options = {}, authToken = null) {
+  const token = authToken || getAuthToken();
   return apiRequest(endpoint, {
     method: 'PUT',
     body: JSON.stringify(data),
     ...options,
-  });
+  }, token);
 }
 
 /**
  * PATCH request
  */
-export async function apiPatch(endpoint, data, options = {}) {
+export async function apiPatch(endpoint, data, options = {}, authToken = null) {
+  const token = authToken || getAuthToken();
   return apiRequest(endpoint, {
     method: 'PATCH',
     body: JSON.stringify(data),
     ...options,
-  });
+  }, token);
 }
 
 /**
  * DELETE request
  */
-export async function apiDelete(endpoint, options = {}) {
+export async function apiDelete(endpoint, options = {}, authToken = null) {
+  const token = authToken || getAuthToken();
   return apiRequest(endpoint, {
     method: 'DELETE',
     ...options,
-  });
+  }, token);
 }
 
 /**
