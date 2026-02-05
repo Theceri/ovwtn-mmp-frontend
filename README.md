@@ -48,10 +48,22 @@ npm install
 Create or update `.env.local`:
 
 ```bash
+# Backend API
 NEXT_PUBLIC_API_URL=http://localhost:8000/api/v1
+
+# NextAuth Configuration
+NEXTAUTH_SECRET=your-secret-key-here-change-in-production
+NEXTAUTH_URL=http://localhost:3000
+
+# App Info (optional)
 NEXT_PUBLIC_APP_NAME="OVWTN Membership Management Platform"
 NEXT_PUBLIC_APP_VERSION="1.0.0"
 NEXT_PUBLIC_WHATSAPP_NUMBER=+254743525312
+```
+
+**Important:** Generate a secure `NEXTAUTH_SECRET`:
+```bash
+openssl rand -base64 32
 ```
 
 ## Running the Application
@@ -101,9 +113,9 @@ The application uses the OVWTN brand colors:
 | Secondary Text | `#61657e` | rgb(97, 101, 126) | Body text |
 | Tertiary Text | `#9fa1af` | rgb(159, 161, 175) | Captions, labels |
 
-## Features Implemented (Section 1)
+## Features Implemented
 
-### ✅ Completed
+### ✅ Section 1 - Project Setup
 
 - [x] Next.js 15 with App Router and `src/` folder
 - [x] Tailwind CSS configuration with OVWTN brand colors
@@ -114,6 +126,20 @@ The application uses the OVWTN brand colors:
 - [x] API utility functions (`src/lib/api.js`)
 - [x] Basic layout with brand colors
 - [x] Health check integration with backend
+
+### ✅ Section 3 - Authentication System
+
+- [x] NextAuth.js v5 installation and configuration
+- [x] Login page with brand colors styling
+- [x] Credentials provider for NextAuth
+- [x] Authentication store with Zustand integration
+- [x] Protected route wrapper component
+- [x] Logout functionality
+- [x] Middleware for automatic route protection
+- [x] Role-based access control (admin/member)
+- [x] Session management and token handling
+
+See [AUTHENTICATION_SETUP.md](./AUTHENTICATION_SETUP.md) for detailed documentation.
 
 ## API Client
 
@@ -196,9 +222,38 @@ The home page (`src/app/page.js`) includes a health check that tests:
 - Database connection status
 - API version information
 
+## Authentication
+
+The application uses NextAuth.js v5 for authentication. See:
+- [AUTHENTICATION_SETUP.md](./AUTHENTICATION_SETUP.md) - Complete setup guide
+- [QUICK_START_AUTH.md](./QUICK_START_AUTH.md) - Quick reference
+
+### Quick Auth Usage
+
+```javascript
+// Protect a page
+import ProtectedRoute from '@/components/ProtectedRoute';
+
+export default function MyPage() {
+  return (
+    <ProtectedRoute requireAuth={true}>
+      <div>Protected content</div>
+    </ProtectedRoute>
+  );
+}
+
+// Use auth in component
+import { useAuth } from '@/hooks/useAuth';
+
+function MyComponent() {
+  const { user, isAuthenticated, isAdmin } = useAuth();
+  // ...
+}
+```
+
 ## Next Steps
 
-1. Create authentication pages (login, register, password reset)
+1. ✅ ~~Create authentication pages (login, register, password reset)~~ - **Completed**
 2. Build multi-step membership application form
 3. Create member dashboard
 4. Build admin dashboard

@@ -4,6 +4,7 @@ import { persist } from 'zustand/middleware';
 /**
  * Authentication state management
  * Handles user login, logout, and session management
+ * Integrates with NextAuth for session management
  */
 export const useAuthStore = create(
   persist(
@@ -27,12 +28,17 @@ export const useAuthStore = create(
       // Set loading state
       setLoading: (isLoading) => set({ isLoading }),
       
-      // Logout
-      logout: () => set({ 
-        user: null, 
-        token: null, 
-        isAuthenticated: false 
-      }),
+      // Logout - clears both Zustand store and NextAuth session
+      logout: async () => {
+        // Clear Zustand store
+        set({ 
+          user: null, 
+          token: null, 
+          isAuthenticated: false 
+        });
+        
+        // Clear NextAuth session (will be handled by signOut in components)
+      },
       
       // Check if user is admin
       isAdmin: () => {
