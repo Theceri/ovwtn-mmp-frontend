@@ -398,5 +398,38 @@ function getFileExtension(contentType) {
   return extensions[contentType] || '';
 }
 
+/**
+ * Verify or reject a payment proof
+ * @param {number} proofId - Payment proof ID
+ * @param {string} status - 'verified' or 'rejected'
+ * @param {string} [notes] - Verification notes
+ * @param {string} [authToken] - Admin JWT token
+ */
+export async function verifyPayment(proofId, status, notes = null, authToken = null) {
+  return apiPost(`/admin/payments/${proofId}/verify`, {
+    status,
+    notes,
+  }, {}, authToken);
+}
+
+/**
+ * Get list of unverified payment proofs
+ * @param {Object} params - Query parameters
+ * @param {number} [params.page] - Page number
+ * @param {number} [params.limit] - Items per page
+ * @param {string} [authToken] - Admin JWT token
+ */
+export async function getUnverifiedPayments(params = {}, authToken = null) {
+  const searchParams = new URLSearchParams();
+  Object.entries(params).forEach(([key, value]) => {
+    if (value != null && value !== '') {
+      searchParams.append(key, value);
+    }
+  });
+  const query = searchParams.toString();
+  const endpoint = `/admin/payments/unverified${query ? `?${query}` : ''}`;
+  return apiGet(endpoint, {}, authToken);
+}
+
 // Export the base URL for use in other places
 export { API_BASE_URL };

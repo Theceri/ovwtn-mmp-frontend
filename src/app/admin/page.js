@@ -28,6 +28,17 @@ export default function AdminPage() {
               View and manage pending membership applications
             </p>
           </Link>
+          <Link
+            href="/admin/payments"
+            className="block p-4 rounded-lg border-2 border-gray-200 hover:border-[var(--brand-primary)] hover:bg-gray-50 transition-colors"
+          >
+            <h3 className="font-semibold mb-1" style={{ color: 'var(--text-primary)' }}>
+              Payment Verification
+            </h3>
+            <p className="text-sm" style={{ color: 'var(--text-secondary)' }}>
+              Verify and manage payment proofs
+            </p>
+          </Link>
         </div>
       </div>
     </div>

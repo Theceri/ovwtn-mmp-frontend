@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { useAuth } from '@/hooks/useAuth';
-import { getAdminApplicationDetail, updateAdminNotes, downloadAdminFile } from '@/lib/api';
+import { getAdminApplicationDetail, updateAdminNotes, downloadAdminFile, verifyPayment } from '@/lib/api';
 import { toast } from 'sonner';
 
 function StatusBadge({ status }) {
@@ -62,6 +62,125 @@ function InfoField({ label, value, className = '' }) {
   );
 }
 
+function PaymentVerificationModal({ isOpen, onClose, paymentProof, onVerify, token, initialStatus = 'verified' }) {
+  const [status, setStatus] = useState(initialStatus);
+  const [notes, setNotes] = useState('');
+  const [submitting, setSubmitting] = useState(false);
+
+  useEffect(() => {
+    if (isOpen) {
+      setStatus(initialStatus);
+      setNotes('');
+    }
+  }, [isOpen, initialStatus]);
+
+  if (!isOpen) return null;
+
+  const handleSubmit = async () => {
+    if (!paymentProof) return;
+    
+    setSubmitting(true);
+    try {
+      await verifyPayment(paymentProof.id, status, notes || null, token);
+      toast.success(`Payment ${status === 'verified' ? 'verified' : 'rejected'} successfully`);
+      onVerify();
+      onClose();
+      setNotes('');
+      setStatus('verified');
+    } catch (err) {
+      toast.error(`Failed to ${status === 'verified' ? 'verify' : 'reject'} payment`);
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
+      <div className="bg-white rounded-lg shadow-xl max-w-md w-full mx-4 p-6" style={{ backgroundColor: 'var(--background)' }}>
+        <h3 className="text-lg font-semibold mb-4" style={{ color: 'var(--text-primary)' }}>
+          {status === 'verified' ? 'Verify Payment' : 'Reject Payment'}
+        </h3>
+        
+        {paymentProof && (
+          <div className="mb-4 space-y-2 text-sm">
+            <div>
+              <span style={{ color: 'var(--text-secondary)' }}>Reference: </span>
+              <span style={{ color: 'var(--text-primary)' }}>{paymentProof.reference_number}</span>
+            </div>
+            <div>
+              <span style={{ color: 'var(--text-secondary)' }}>Amount: </span>
+              <span style={{ color: 'var(--text-primary)' }}>
+                KES {parseFloat(paymentProof.amount || 0).toLocaleString()}
+              </span>
+            </div>
+            <div>
+              <span style={{ color: 'var(--text-secondary)' }}>Type: </span>
+              <span style={{ color: 'var(--text-primary)' }}>{paymentProof.payment_type?.toUpperCase()}</span>
+            </div>
+          </div>
+        )}
+
+        <div className="mb-4">
+          <label className="block text-sm font-medium mb-2" style={{ color: 'var(--text-primary)' }}>
+            Action
+          </label>
+          <select
+            value={status}
+            onChange={(e) => setStatus(e.target.value)}
+            className="w-full px-3 py-2 border rounded-lg text-sm"
+            style={{
+              borderColor: 'var(--input-border)',
+              color: 'var(--text-primary)',
+              backgroundColor: 'var(--background)',
+            }}
+          >
+            <option value="verified">Verify Payment</option>
+            <option value="rejected">Reject Payment</option>
+          </select>
+        </div>
+
+        <div className="mb-4">
+          <label className="block text-sm font-medium mb-2" style={{ color: 'var(--text-primary)' }}>
+            Notes (Optional)
+          </label>
+          <textarea
+            value={notes}
+            onChange={(e) => setNotes(e.target.value)}
+            placeholder="Add verification notes..."
+            rows={4}
+            className="w-full px-3 py-2 border rounded-lg resize-none text-sm"
+            style={{
+              borderColor: 'var(--input-border)',
+              color: 'var(--text-primary)',
+              backgroundColor: 'var(--background)',
+            }}
+          />
+        </div>
+
+        <div className="flex gap-3 justify-end">
+          <button
+            onClick={onClose}
+            disabled={submitting}
+            className="px-4 py-2 rounded-lg text-sm font-medium border disabled:opacity-50 disabled:cursor-not-allowed"
+            style={{ borderColor: 'var(--input-border)', color: 'var(--text-primary)' }}
+          >
+            Cancel
+          </button>
+          <button
+            onClick={handleSubmit}
+            disabled={submitting}
+            className={`px-4 py-2 rounded-lg text-sm font-medium text-white disabled:opacity-50 disabled:cursor-not-allowed ${
+              status === 'verified' ? 'bg-green-600 hover:bg-green-700' : 'bg-red-600 hover:bg-red-700'
+            }`}
+          >
+            {submitting ? 'Processing...' : (status === 'verified' ? 'Verify' : 'Reject')}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export default function ApplicationDetailPage() {
   const params = useParams();
   const router = useRouter();
@@ -73,6 +192,8 @@ export default function ApplicationDetailPage() {
   const [error, setError] = useState(null);
   const [adminNotes, setAdminNotes] = useState('');
   const [savingNotes, setSavingNotes] = useState(false);
+  const [showVerificationModal, setShowVerificationModal] = useState(false);
+  const [verificationModalStatus, setVerificationModalStatus] = useState('verified');
 
   useEffect(() => {
     if (!token || !applicationId) return;
@@ -117,6 +238,18 @@ export default function ApplicationDetailPage() {
       toast.success('File download started');
     } catch (err) {
       toast.error('Failed to download file');
+    }
+  };
+
+  const handleVerifyPayment = async () => {
+    // Refresh application data after verification
+    if (!token || !applicationId) return;
+    
+    try {
+      const data = await getAdminApplicationDetail(applicationId, token);
+      setApplication(data);
+    } catch (err) {
+      toast.error('Failed to refresh application data');
     }
   };
 
@@ -311,8 +444,44 @@ export default function ApplicationDetailPage() {
                          className="md:col-span-2" />
             )}
           </div>
+          
+          {/* Payment Verification Actions */}
+          {application.payment_proof.verification_status === 'pending' && (
+            <div className="mt-4 pt-4 border-t">
+              <div className="flex gap-3">
+                <button
+                  onClick={() => {
+                    setVerificationModalStatus('verified');
+                    setShowVerificationModal(true);
+                  }}
+                  className="px-4 py-2 rounded-lg text-sm font-medium text-white bg-green-600 hover:bg-green-700"
+                >
+                  Verify Payment
+                </button>
+                <button
+                  onClick={() => {
+                    setVerificationModalStatus('rejected');
+                    setShowVerificationModal(true);
+                  }}
+                  className="px-4 py-2 rounded-lg text-sm font-medium text-white bg-red-600 hover:bg-red-700"
+                >
+                  Reject Payment
+                </button>
+              </div>
+            </div>
+          )}
         </InfoSection>
       )}
+
+      {/* Payment Verification Modal */}
+      <PaymentVerificationModal
+        isOpen={showVerificationModal}
+        onClose={() => setShowVerificationModal(false)}
+        paymentProof={application?.payment_proof}
+        onVerify={handleVerifyPayment}
+        token={token}
+        initialStatus={verificationModalStatus}
+      />
 
       {/* Addressing Key Issues */}
       {(application.trade_barriers || application.advocacy_messages || application.association_needs || 
