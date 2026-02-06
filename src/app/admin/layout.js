@@ -9,6 +9,7 @@ import { useAuth } from '@/hooks/useAuth';
 const navItems = [
   { href: '/admin', label: 'Dashboard' },
   { href: '/admin/applications', label: 'Applications' },
+  { href: '/admin/payments', label: 'Payment Verification' },
 ];
 
 export default function AdminLayout({ children }) {
