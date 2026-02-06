@@ -237,6 +237,57 @@ export async function getMembershipTiers() {
 }
 
 // ============================================
+// Auth API
+// ============================================
+
+/**
+ * Request password reset
+ */
+export async function requestPasswordReset(email) {
+  return apiPost('/auth/password-reset-request', { email });
+}
+
+/**
+ * Reset password with token
+ */
+export async function resetPassword(token, newPassword) {
+  return apiPost('/auth/password-reset', {
+    token,
+    new_password: newPassword,
+  });
+}
+
+/**
+ * Change password (authenticated)
+ */
+export async function changePassword(currentPassword, newPassword) {
+  return apiPost('/auth/change-password', {
+    current_password: currentPassword,
+    new_password: newPassword,
+  });
+
+// ============================================
+// Auth API
+// ============================================
+
+/**
+ * Request password reset
+ */
+export async function requestPasswordReset(email) {
+  return apiPost('/auth/password-reset-request', { email });
+}
+
+/**
+ * Reset password with token
+ */
+export async function resetPassword(token, newPassword) {
+  return apiPost('/auth/password-reset', {
+    token,
+    new_password: newPassword,
+  });
+}
+
+// ============================================
 // Application API
 // ============================================
 
