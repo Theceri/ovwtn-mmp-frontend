@@ -21,7 +21,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
 
         try {
           // Call backend login endpoint
-          const response = await apiPost("/auth/login", {
+          const response = await apiPost("/login", {
             email: credentials.email,
             password: credentials.password,
           });

@@ -49,8 +49,37 @@ async function apiRequest(endpoint, options = {}, authToken = null) {
 
     // Handle error responses
     if (!response.ok) {
+      // Format FastAPI validation errors (422 responses)
+      let errorMessage = 'An error occurred';
+      if (data.detail) {
+        if (Array.isArray(data.detail)) {
+          // FastAPI validation errors are an array
+          const errors = data.detail.map(err => {
+            const field = err.loc && err.loc.length > 1 ? err.loc[err.loc.length - 1] : 'field';
+            // Convert snake_case to Title Case for better readability
+            const fieldName = field
+              .replace(/_/g, ' ')
+              .replace(/\b\w/g, l => l.toUpperCase());
+            // Extract just the main message, removing redundant field name if present
+            let msg = err.msg;
+            if (msg.includes(':')) {
+              const parts = msg.split(':');
+              msg = parts[parts.length - 1].trim();
+            }
+            return `${fieldName}: ${msg}`;
+          });
+          errorMessage = errors.join('. ');
+        } else if (typeof data.detail === 'string') {
+          errorMessage = data.detail;
+        } else {
+          errorMessage = JSON.stringify(data.detail);
+        }
+      } else if (data.message) {
+        errorMessage = data.message;
+      }
+      
       throw new ApiError(
-        data.detail || data.message || 'An error occurred',
+        errorMessage,
         response.status,
         data
       );
@@ -234,6 +263,35 @@ export async function uploadApplicationDocument(file, documentType, email) {
  */
 export async function getApplicationStatus(applicationNumber) {
   return apiGet(`/applications/${applicationNumber}`);
+}
+
+// ============================================
+// Admin API (requires admin auth token)
+// ============================================
+
+/**
+ * List applications with filters and pagination
+ * @param {Object} params - Query parameters
+ * @param {string} [params.status] - Filter by status
+ * @param {string} [params.tier] - Filter by membership type
+ * @param {string} [params.county] - Filter by county
+ * @param {string} [params.search] - Search by organisation name
+ * @param {string} [params.date_from] - From date (YYYY-MM-DD)
+ * @param {string} [params.date_to] - To date (YYYY-MM-DD)
+ * @param {number} [params.page] - Page number
+ * @param {number} [params.limit] - Items per page
+ * @param {string} [authToken] - Admin JWT token
+ */
+export async function getAdminApplications(params = {}, authToken = null) {
+  const searchParams = new URLSearchParams();
+  Object.entries(params).forEach(([key, value]) => {
+    if (value != null && value !== '') {
+      searchParams.append(key, value);
+    }
+  });
+  const query = searchParams.toString();
+  const endpoint = `/admin/applications${query ? `?${query}` : ''}`;
+  return apiGet(endpoint, {}, authToken);
 }
 
 // Export the base URL for use in other places
