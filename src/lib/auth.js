@@ -51,6 +51,9 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
               name: userData.name || userData.full_name || userData.email,
               role: userData.role,
               organisation_id: userData.organisation_id || userData.organisationId,
+              first_login: userData.first_login ?? true,
+              onboarding_completed: userData.onboarding_completed ?? false,
+              onboarding_step: userData.onboarding_step ?? 0,
               access_token: token,
             };
           }
@@ -75,6 +78,9 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
         token.role = user.role;
         token.organisationId = user.organisation_id;
         token.id = user.id;
+        token.firstLogin = user.first_login;
+        token.onboardingCompleted = user.onboarding_completed;
+        token.onboardingStep = user.onboarding_step;
       }
       return token;
     },
@@ -84,6 +90,9 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
         session.user.id = token.id;
         session.user.role = token.role;
         session.user.organisation_id = token.organisationId;
+        session.user.first_login = token.firstLogin;
+        session.user.onboarding_completed = token.onboardingCompleted;
+        session.user.onboarding_step = token.onboardingStep;
         session.accessToken = token.accessToken;
       }
       return session;

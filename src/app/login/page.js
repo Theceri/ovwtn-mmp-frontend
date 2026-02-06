@@ -45,10 +45,11 @@ export default function LoginPage() {
         // Redirect based on role or callback URL
         if (session?.user?.role === 'admin') {
           router.push('/admin');
-        } else if (callbackUrl && callbackUrl !== '/login') {
+        } else if (callbackUrl && callbackUrl !== '/login' && callbackUrl !== '/dashboard') {
           router.push(callbackUrl);
         } else {
-          router.push('/dashboard');
+          // Members go to /member, others to /dashboard
+          router.push(session?.user?.role === 'member' ? '/member' : '/dashboard');
         }
         router.refresh();
       }

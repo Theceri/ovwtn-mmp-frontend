@@ -246,14 +246,14 @@ export async function getMembershipTiers() {
  * Request password reset
  */
 export async function requestPasswordReset(email) {
-  return apiPost('/auth/password-reset-request', { email });
+  return apiPost('/password-reset-request', { email });
 }
 
 /**
  * Reset password with token
  */
 export async function resetPassword(token, newPassword) {
-  return apiPost('/auth/password-reset', {
+  return apiPost('/password-reset', {
     token,
     new_password: newPassword,
   });
@@ -263,7 +263,7 @@ export async function resetPassword(token, newPassword) {
  * Change password (authenticated)
  */
 export async function changePassword(currentPassword, newPassword) {
-  return apiPost('/auth/change-password', {
+  return apiPost('/change-password', {
     current_password: currentPassword,
     new_password: newPassword,
   });
@@ -467,6 +467,98 @@ export async function getUnverifiedPayments(params = {}, authToken = null) {
   const query = searchParams.toString();
   const endpoint = `/admin/payments/unverified${query ? `?${query}` : ''}`;
   return apiGet(endpoint, {}, authToken);
+}
+
+// ============================================
+// Member API (requires member auth token)
+// ============================================
+
+/**
+ * Get member onboarding status
+ * @param {string} [authToken] - Member JWT token
+ */
+export async function getMemberOnboardingStatus(authToken = null) {
+  return apiGet('/member/onboarding-status', {}, authToken);
+}
+
+/**
+ * Complete an onboarding step
+ * @param {number} step - Step number (1-5)
+ * @param {string} [authToken] - Member JWT token
+ */
+export async function completeOnboardingStep(step, authToken = null) {
+  return apiPost('/member/onboarding/complete-step', { step }, {}, authToken);
+}
+
+/**
+ * Skip remaining onboarding steps
+ * @param {string} [authToken] - Member JWT token
+ */
+export async function skipOnboarding(authToken = null) {
+  return apiPost('/member/onboarding/skip', {}, {}, authToken);
+}
+
+/**
+ * Get member profile (includes organisation and membership info)
+ * @param {string} [authToken] - Member JWT token
+ */
+export async function getMemberProfile(authToken = null) {
+  return apiGet('/member/profile', {}, authToken);
+}
+
+/**
+ * Update member organisation profile
+ * @param {Object} profileData - Fields to update
+ * @param {string} [authToken] - Member JWT token
+ */
+export async function updateMemberProfile(profileData, authToken = null) {
+  return apiPatch('/member/profile', profileData, {}, authToken);
+}
+
+/**
+ * Update member contact methods
+ * @param {Object} contactData - Contact fields to update
+ * @param {string} [authToken] - Member JWT token
+ */
+export async function updateMemberContacts(contactData, authToken = null) {
+  return apiPatch('/member/profile/contacts', contactData, {}, authToken);
+}
+
+/**
+ * Upload organisation logo
+ * @param {File} file - Logo image file
+ * @param {string} [authToken] - Member JWT token
+ */
+export async function uploadOrganisationLogo(file, authToken = null) {
+  const token = authToken || getAuthToken();
+  const formData = new FormData();
+  formData.append('file', file);
+  
+  const url = `${API_BASE_URL}/member/profile/logo`;
+  
+  try {
+    const response = await fetch(url, {
+      method: 'POST',
+      body: formData,
+      headers: {
+        ...(token && { Authorization: `Bearer ${token}` }),
+      },
+    });
+    const data = await response.json();
+    
+    if (!response.ok) {
+      throw new ApiError(
+        data.detail || data.message || 'Logo upload failed',
+        response.status,
+        data
+      );
+    }
+    
+    return data;
+  } catch (error) {
+    if (error instanceof ApiError) throw error;
+    throw new ApiError(error.message || 'Logo upload failed', 0, null);
+  }
 }
 
 // Export the base URL for use in other places
