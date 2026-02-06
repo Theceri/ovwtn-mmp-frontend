@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { useAuth } from '@/hooks/useAuth';
-import { getAdminApplicationDetail, updateAdminNotes, downloadAdminFile, verifyPayment, approveApplication, rejectApplication } from '@/lib/api';
+import { getAdminApplicationDetail, updateAdminNotes, downloadAdminFile, verifyPayment, approveApplication, rejectApplication, getRejectionReasons, reverseRejection } from '@/lib/api';
 import { toast } from 'sonner';
 
 function StatusBadge({ status }) {
@@ -197,7 +197,9 @@ export default function ApplicationDetailPage() {
   const [showRejectionModal, setShowRejectionModal] = useState(false);
   const [rejectionReason, setRejectionReason] = useState('');
   const [rejectionNotes, setRejectionNotes] = useState('');
+  const [rejectionReasons, setRejectionReasons] = useState([]);
   const [processing, setProcessing] = useState(false);
+  const [showApproveConfirm, setShowApproveConfirm] = useState(false);
 
   useEffect(() => {
     if (!token || !applicationId) return;
@@ -218,6 +220,11 @@ export default function ApplicationDetailPage() {
     };
 
     fetchApplication();
+    
+    // Fetch rejection reasons
+    getRejectionReasons(token)
+      .then(data => setRejectionReasons(data.reasons || []))
+      .catch(() => {});
   }, [applicationId, token]);
 
   const handleSaveNotes = async () => {
@@ -262,13 +269,17 @@ export default function ApplicationDetailPage() {
     
     setProcessing(true);
     try {
-      await approveApplication(applicationId, token);
-      toast.success('Application approved successfully');
+      const result = await approveApplication(applicationId, token);
+      setShowApproveConfirm(false);
+      const emailMsg = result.email_sent
+        ? ` Confirmation email sent to ${result.applicant_email}.`
+        : ' Note: Confirmation email could not be sent.';
+      toast.success(`Application approved successfully.${emailMsg}`);
       // Refresh application data
       const data = await getAdminApplicationDetail(applicationId, token);
       setApplication(data);
     } catch (err) {
-      toast.error('Failed to approve application');
+      toast.error(err.message || 'Failed to approve application');
     } finally {
       setProcessing(false);
     }
@@ -276,18 +287,25 @@ export default function ApplicationDetailPage() {
 
   const handleReject = async () => {
     if (!token) return;
+    if (!rejectionReason) {
+      toast.error('Please select a rejection reason');
+      return;
+    }
     
     setProcessing(true);
     try {
-      await rejectApplication(
+      const result = await rejectApplication(
         applicationId,
         {
-          rejection_reason: rejectionReason || null,
+          rejection_reason: rejectionReason,
           rejection_notes: rejectionNotes || null,
         },
         token
       );
-      toast.success('Application rejected');
+      const emailMsg = result.email_sent
+        ? ` Rejection email sent to ${result.applicant_email}.`
+        : ' Note: Rejection email could not be sent.';
+      toast.success(`Application rejected.${emailMsg}`);
       setShowRejectionModal(false);
       setRejectionReason('');
       setRejectionNotes('');
@@ -295,7 +313,23 @@ export default function ApplicationDetailPage() {
       const data = await getAdminApplicationDetail(applicationId, token);
       setApplication(data);
     } catch (err) {
-      toast.error('Failed to reject application');
+      toast.error(err.message || 'Failed to reject application');
+    } finally {
+      setProcessing(false);
+    }
+  };
+
+  const handleReverseRejection = async () => {
+    if (!token) return;
+    
+    setProcessing(true);
+    try {
+      await reverseRejection(applicationId, token);
+      toast.success('Rejection reversed. Application is now pending.');
+      const data = await getAdminApplicationDetail(applicationId, token);
+      setApplication(data);
+    } catch (err) {
+      toast.error(err.message || 'Failed to reverse rejection');
     } finally {
       setProcessing(false);
     }
@@ -350,11 +384,11 @@ export default function ApplicationDetailPage() {
           {application.status === 'pending' && (
             <div className="flex gap-2">
               <button
-                onClick={handleApprove}
+                onClick={() => setShowApproveConfirm(true)}
                 disabled={processing}
                 className="px-4 py-2 rounded-lg text-sm font-medium text-white bg-green-600 hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                {processing ? 'Processing...' : 'Approve'}
+                Approve
               </button>
               <button
                 onClick={() => setShowRejectionModal(true)}
@@ -364,6 +398,16 @@ export default function ApplicationDetailPage() {
                 Reject
               </button>
             </div>
+          )}
+          {application.status === 'rejected' && (
+            <button
+              onClick={handleReverseRejection}
+              disabled={processing}
+              className="px-4 py-2 rounded-lg text-sm font-medium text-white disabled:opacity-50 disabled:cursor-not-allowed"
+              style={{ backgroundColor: 'var(--brand-primary)' }}
+            >
+              {processing ? 'Processing...' : 'Reverse Rejection'}
+            </button>
           )}
         </div>
       </div>
@@ -551,6 +595,50 @@ export default function ApplicationDetailPage() {
         initialStatus={verificationModalStatus}
       />
 
+      {/* Approval Confirmation Modal */}
+      {showApproveConfirm && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
+          <div className="bg-white rounded-lg shadow-xl max-w-md w-full mx-4 p-6" style={{ backgroundColor: 'var(--background)' }}>
+            <h3 className="text-lg font-semibold mb-4" style={{ color: 'var(--text-primary)' }}>
+              Confirm Approval
+            </h3>
+            
+            <div className="mb-4 space-y-2 text-sm" style={{ color: 'var(--text-secondary)' }}>
+              <p>You are about to approve the application for:</p>
+              <div className="p-3 bg-gray-50 rounded-lg space-y-1">
+                <p><span className="font-medium" style={{ color: 'var(--text-primary)' }}>Organisation:</span> {application.organisation_name}</p>
+                <p><span className="font-medium" style={{ color: 'var(--text-primary)' }}>Applicant:</span> {application.applicant_email}</p>
+                <p><span className="font-medium" style={{ color: 'var(--text-primary)' }}>Tier:</span> {application.membership_type?.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}</p>
+              </div>
+              <p>This will:</p>
+              <ul className="list-disc list-inside space-y-1 ml-2">
+                <li>Create an Organisation record</li>
+                <li>Create a member account with a temporary password</li>
+                <li>Send an approval email with login credentials</li>
+              </ul>
+            </div>
+
+            <div className="flex gap-3 justify-end">
+              <button
+                onClick={() => setShowApproveConfirm(false)}
+                disabled={processing}
+                className="px-4 py-2 rounded-lg text-sm font-medium border disabled:opacity-50 disabled:cursor-not-allowed"
+                style={{ borderColor: 'var(--input-border)', color: 'var(--text-primary)' }}
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleApprove}
+                disabled={processing}
+                className="px-4 py-2 rounded-lg text-sm font-medium text-white bg-green-600 hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {processing ? 'Approving...' : 'Confirm Approval'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Rejection Modal */}
       {showRejectionModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
@@ -561,30 +649,33 @@ export default function ApplicationDetailPage() {
             
             <div className="mb-4">
               <label className="block text-sm font-medium mb-2" style={{ color: 'var(--text-primary)' }}>
-                Rejection Reason (Optional)
+                Rejection Reason <span className="text-red-500">*</span>
               </label>
-              <input
-                type="text"
+              <select
                 value={rejectionReason}
                 onChange={(e) => setRejectionReason(e.target.value)}
-                placeholder="Brief reason for rejection..."
                 className="w-full px-3 py-2 border rounded-lg text-sm"
                 style={{
                   borderColor: 'var(--input-border)',
                   color: 'var(--text-primary)',
                   backgroundColor: 'var(--background)',
                 }}
-              />
+              >
+                <option value="">Select a reason...</option>
+                {rejectionReasons.map((reason) => (
+                  <option key={reason} value={reason}>{reason}</option>
+                ))}
+              </select>
             </div>
 
             <div className="mb-4">
               <label className="block text-sm font-medium mb-2" style={{ color: 'var(--text-primary)' }}>
-                Rejection Notes (Optional)
+                Notes {rejectionReason === 'Other' ? <span className="text-red-500">*</span> : '(Optional)'}
               </label>
               <textarea
                 value={rejectionNotes}
                 onChange={(e) => setRejectionNotes(e.target.value)}
-                placeholder="Add detailed notes about the rejection..."
+                placeholder={rejectionReason === 'Other' ? 'Please provide details (required)...' : 'Add additional notes...'}
                 rows={4}
                 className="w-full px-3 py-2 border rounded-lg resize-none text-sm"
                 style={{
@@ -610,7 +701,7 @@ export default function ApplicationDetailPage() {
               </button>
               <button
                 onClick={handleReject}
-                disabled={processing}
+                disabled={processing || !rejectionReason || (rejectionReason === 'Other' && !rejectionNotes.trim())}
                 className="px-4 py-2 rounded-lg text-sm font-medium text-white bg-red-600 hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 {processing ? 'Processing...' : 'Reject Application'}

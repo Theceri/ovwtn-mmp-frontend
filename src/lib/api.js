@@ -356,15 +356,32 @@ export async function approveApplication(applicationId, authToken = null) {
 }
 
 /**
+ * Get predefined rejection reasons
+ * @param {string} [authToken] - Admin JWT token
+ */
+export async function getRejectionReasons(authToken = null) {
+  return apiGet('/admin/rejection-reasons', {}, authToken);
+}
+
+/**
  * Reject a membership application
  * @param {number} applicationId - Application ID
  * @param {Object} rejectionData - Rejection data
- * @param {string} [rejectionData.rejection_reason] - Reason for rejection
+ * @param {string} rejectionData.rejection_reason - Required reason for rejection
  * @param {string} [rejectionData.rejection_notes] - Additional notes
  * @param {string} [authToken] - Admin JWT token
  */
 export async function rejectApplication(applicationId, rejectionData, authToken = null) {
   return apiPost(`/admin/applications/${applicationId}/reject`, rejectionData, {}, authToken);
+}
+
+/**
+ * Reverse a rejection, setting application back to pending
+ * @param {number} applicationId - Application ID
+ * @param {string} [authToken] - Admin JWT token
+ */
+export async function reverseRejection(applicationId, authToken = null) {
+  return apiPost(`/admin/applications/${applicationId}/reverse-rejection`, {}, {}, authToken);
 }
 
 /**
