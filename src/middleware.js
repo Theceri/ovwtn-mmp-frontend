@@ -35,7 +35,16 @@ export default auth((req) => {
 
   // Role-based access control for admin routes
   if (pathname.startsWith('/admin') && req.auth?.user?.role !== 'admin') {
-    // Redirect non-admin users to dashboard
+    // Redirect non-admin users to member portal
+    return Response.redirect(new URL('/member', req.url));
+  }
+
+  // Role-based access control for member routes
+  if (pathname.startsWith('/member') && req.auth?.user?.role !== 'member') {
+    // Redirect non-member users to admin or dashboard
+    if (req.auth?.user?.role === 'admin') {
+      return Response.redirect(new URL('/admin', req.url));
+    }
     return Response.redirect(new URL('/dashboard', req.url));
   }
 });
