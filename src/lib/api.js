@@ -347,6 +347,27 @@ export async function updateAdminNotes(applicationId, adminNotes, authToken = nu
 }
 
 /**
+ * Approve a membership application
+ * @param {number} applicationId - Application ID
+ * @param {string} [authToken] - Admin JWT token
+ */
+export async function approveApplication(applicationId, authToken = null) {
+  return apiPost(`/admin/applications/${applicationId}/approve`, {}, {}, authToken);
+}
+
+/**
+ * Reject a membership application
+ * @param {number} applicationId - Application ID
+ * @param {Object} rejectionData - Rejection data
+ * @param {string} [rejectionData.rejection_reason] - Reason for rejection
+ * @param {string} [rejectionData.rejection_notes] - Additional notes
+ * @param {string} [authToken] - Admin JWT token
+ */
+export async function rejectApplication(applicationId, rejectionData, authToken = null) {
+  return apiPost(`/admin/applications/${applicationId}/reject`, rejectionData, {}, authToken);
+}
+
+/**
  * Download application file (opens in new window)
  * @param {string} fileType - 'registration_certificate' or 'kra_pin'
  * @param {number} applicationId - Application ID

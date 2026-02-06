@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { useAuth } from '@/hooks/useAuth';
-import { getAdminApplicationDetail, updateAdminNotes, downloadAdminFile, verifyPayment } from '@/lib/api';
+import { getAdminApplicationDetail, updateAdminNotes, downloadAdminFile, verifyPayment, approveApplication, rejectApplication } from '@/lib/api';
 import { toast } from 'sonner';
 
 function StatusBadge({ status }) {
@@ -194,6 +194,10 @@ export default function ApplicationDetailPage() {
   const [savingNotes, setSavingNotes] = useState(false);
   const [showVerificationModal, setShowVerificationModal] = useState(false);
   const [verificationModalStatus, setVerificationModalStatus] = useState('verified');
+  const [showRejectionModal, setShowRejectionModal] = useState(false);
+  const [rejectionReason, setRejectionReason] = useState('');
+  const [rejectionNotes, setRejectionNotes] = useState('');
+  const [processing, setProcessing] = useState(false);
 
   useEffect(() => {
     if (!token || !applicationId) return;
@@ -253,6 +257,50 @@ export default function ApplicationDetailPage() {
     }
   };
 
+  const handleApprove = async () => {
+    if (!token) return;
+    
+    setProcessing(true);
+    try {
+      await approveApplication(applicationId, token);
+      toast.success('Application approved successfully');
+      // Refresh application data
+      const data = await getAdminApplicationDetail(applicationId, token);
+      setApplication(data);
+    } catch (err) {
+      toast.error('Failed to approve application');
+    } finally {
+      setProcessing(false);
+    }
+  };
+
+  const handleReject = async () => {
+    if (!token) return;
+    
+    setProcessing(true);
+    try {
+      await rejectApplication(
+        applicationId,
+        {
+          rejection_reason: rejectionReason || null,
+          rejection_notes: rejectionNotes || null,
+        },
+        token
+      );
+      toast.success('Application rejected');
+      setShowRejectionModal(false);
+      setRejectionReason('');
+      setRejectionNotes('');
+      // Refresh application data
+      const data = await getAdminApplicationDetail(applicationId, token);
+      setApplication(data);
+    } catch (err) {
+      toast.error('Failed to reject application');
+    } finally {
+      setProcessing(false);
+    }
+  };
+
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-[400px]">
@@ -297,7 +345,27 @@ export default function ApplicationDetailPage() {
             Application: {application.application_number}
           </h2>
         </div>
-        <StatusBadge status={application.status} />
+        <div className="flex items-center gap-4">
+          <StatusBadge status={application.status} />
+          {application.status === 'pending' && (
+            <div className="flex gap-2">
+              <button
+                onClick={handleApprove}
+                disabled={processing}
+                className="px-4 py-2 rounded-lg text-sm font-medium text-white bg-green-600 hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {processing ? 'Processing...' : 'Approve'}
+              </button>
+              <button
+                onClick={() => setShowRejectionModal(true)}
+                disabled={processing}
+                className="px-4 py-2 rounded-lg text-sm font-medium text-white bg-red-600 hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                Reject
+              </button>
+            </div>
+          )}
+        </div>
       </div>
 
       {/* Application Status & Metadata */}
@@ -482,6 +550,75 @@ export default function ApplicationDetailPage() {
         token={token}
         initialStatus={verificationModalStatus}
       />
+
+      {/* Rejection Modal */}
+      {showRejectionModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
+          <div className="bg-white rounded-lg shadow-xl max-w-md w-full mx-4 p-6" style={{ backgroundColor: 'var(--background)' }}>
+            <h3 className="text-lg font-semibold mb-4" style={{ color: 'var(--text-primary)' }}>
+              Reject Application
+            </h3>
+            
+            <div className="mb-4">
+              <label className="block text-sm font-medium mb-2" style={{ color: 'var(--text-primary)' }}>
+                Rejection Reason (Optional)
+              </label>
+              <input
+                type="text"
+                value={rejectionReason}
+                onChange={(e) => setRejectionReason(e.target.value)}
+                placeholder="Brief reason for rejection..."
+                className="w-full px-3 py-2 border rounded-lg text-sm"
+                style={{
+                  borderColor: 'var(--input-border)',
+                  color: 'var(--text-primary)',
+                  backgroundColor: 'var(--background)',
+                }}
+              />
+            </div>
+
+            <div className="mb-4">
+              <label className="block text-sm font-medium mb-2" style={{ color: 'var(--text-primary)' }}>
+                Rejection Notes (Optional)
+              </label>
+              <textarea
+                value={rejectionNotes}
+                onChange={(e) => setRejectionNotes(e.target.value)}
+                placeholder="Add detailed notes about the rejection..."
+                rows={4}
+                className="w-full px-3 py-2 border rounded-lg resize-none text-sm"
+                style={{
+                  borderColor: 'var(--input-border)',
+                  color: 'var(--text-primary)',
+                  backgroundColor: 'var(--background)',
+                }}
+              />
+            </div>
+
+            <div className="flex gap-3 justify-end">
+              <button
+                onClick={() => {
+                  setShowRejectionModal(false);
+                  setRejectionReason('');
+                  setRejectionNotes('');
+                }}
+                disabled={processing}
+                className="px-4 py-2 rounded-lg text-sm font-medium border disabled:opacity-50 disabled:cursor-not-allowed"
+                style={{ borderColor: 'var(--input-border)', color: 'var(--text-primary)' }}
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleReject}
+                disabled={processing}
+                className="px-4 py-2 rounded-lg text-sm font-medium text-white bg-red-600 hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {processing ? 'Processing...' : 'Reject Application'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Addressing Key Issues */}
       {(application.trade_barriers || application.advocacy_messages || application.association_needs || 
