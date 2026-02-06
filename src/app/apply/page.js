@@ -6,7 +6,7 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { toast } from 'sonner';
 import { useApplicationStore } from '@/store/useApplicationStore';
-import { apiPost } from '@/lib/api';
+import { apiPost, ApiError } from '@/lib/api';
 import FormProgress from '@/components/application/FormProgress';
 import FormNavigation from '@/components/application/FormNavigation';
 import {
@@ -116,14 +116,14 @@ export default function ApplyPage() {
     try {
       // Prepare submission data
       const submissionData = {
-        email: formData.email,
-        organisation_name: formData.organisationName,
-        physical_address: formData.physicalAddress,
-        postal_address: formData.postalAddress,
-        county: formData.county,
-        phone_number: formData.telephone,
-        email_address: formData.emailAddress,
-        website: formData.website,
+        email: formData.email?.trim(),
+        organisation_name: formData.organisationName?.trim(),
+        physical_address: formData.physicalAddress?.trim() || null,
+        postal_address: formData.postalAddress?.trim() || null,
+        county: formData.county?.trim() || null,
+        phone_number: formData.telephone?.trim() || null,
+        email_address: formData.emailAddress?.trim() || null,
+        website: formData.website?.trim() || null,
         sectors: formData.sectors,
         counties_of_operation: formData.countiesOfOperation,
         membership_type: formData.membershipType,
@@ -134,40 +134,40 @@ export default function ApplyPage() {
         represents_women_in_trade: formData.representsWomenInTrade,
         
         // Association details
-        registration_type: formData.registrationType,
-        registration_type_other: formData.registrationTypeOther,
-        organisation_description: formData.organisationDescription,
+        registration_type: formData.registrationType?.trim() || null,
+        registration_type_other: formData.registrationTypeOther?.trim() || null,
+        organisation_description: formData.organisationDescription?.trim() || null,
         total_members: formData.totalMembers ? parseInt(formData.totalMembers) : null,
-        registration_number: formData.registrationNumber,
+        registration_number: formData.registrationNumber?.trim() || null,
         registration_date: formData.registrationDate || null,
         
         // Representative
-        representative_name: formData.representativeName,
-        representative_designation: formData.representativeDesignation,
-        representative_email: formData.representativeEmail,
-        representative_phone: formData.representativePhone,
+        representative_name: formData.representativeName?.trim() || null,
+        representative_designation: formData.representativeDesignation?.trim() || null,
+        representative_email: formData.representativeEmail?.trim() || null,
+        representative_phone: formData.representativePhone?.trim() || null,
         
         // Leadership
-        chairperson_name: formData.chairpersonName,
-        vice_chair_name: formData.viceChairName,
-        ceo_name: formData.ceoName,
+        chairperson_name: formData.chairpersonName?.trim() || null,
+        vice_chair_name: formData.viceChairName?.trim() || null,
+        ceo_name: formData.ceoName?.trim() || null,
         
         // Payment
-        register_interest: formData.registerInterest,
-        payment_mode: formData.paymentMode,
-        payment_reference: formData.paymentReference,
+        register_interest: formData.registerInterest || null,
+        payment_mode: formData.paymentMode?.toLowerCase().trim() || null,
+        payment_reference: formData.paymentReference?.trim() || null,
         
         // Key issues
-        trade_barriers: formData.tradeBarriers,
-        advocacy_messages: formData.advocacyMessages,
-        association_needs: formData.associationNeeds,
-        expected_benefits: formData.expectedBenefits,
-        contributions: formData.contributions,
-        contributions_other: formData.contributionsOther,
+        trade_barriers: formData.tradeBarriers?.trim() || null,
+        advocacy_messages: formData.advocacyMessages?.trim() || null,
+        association_needs: formData.associationNeeds?.trim() || null,
+        expected_benefits: formData.expectedBenefits?.trim() || null,
+        contributions: formData.contributions || null,
+        contributions_other: formData.contributionsOther?.trim() || null,
         
         // Referral and consent
-        referral_source: formData.referralSource,
-        referral_source_other: formData.referralSourceOther,
+        referral_source: formData.referralSource || null,
+        referral_source_other: formData.referralSourceOther?.trim() || null,
         data_consent: formData.dataConsent,
       };
 
@@ -181,8 +181,24 @@ export default function ApplyPage() {
       
     } catch (error) {
       console.error('Submission error:', error);
-      setSubmissionError(error.message);
-      toast.error(error.message || 'Failed to submit application. Please try again.');
+      
+      let errorMessage = 'Failed to submit application. Please try again.';
+      
+      if (error instanceof ApiError) {
+        errorMessage = error.message;
+        
+        // If it's a validation error (422), show more details
+        if (error.status === 422 && error.data?.detail) {
+          // The error.message already contains formatted errors from api.js
+          // Just log the raw details for debugging
+          console.error('Validation errors:', error.data.detail);
+        }
+      } else if (error.message) {
+        errorMessage = error.message;
+      }
+      
+      setSubmissionError(errorMessage);
+      toast.error(errorMessage);
     } finally {
       setSubmitting(false);
     }
