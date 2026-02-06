@@ -294,7 +294,14 @@ export default function AdminApplicationsPage() {
               <TableBody>
                 {applications.map((app) => (
                   <TableRow key={app.id}>
-                    <TableCell className="font-medium">{app.application_number}</TableCell>
+                    <TableCell className="font-medium">
+                      <a
+                        href={`/admin/applications/${app.id}`}
+                        className="text-blue-600 hover:text-blue-800 hover:underline"
+                      >
+                        {app.application_number}
+                      </a>
+                    </TableCell>
                     <TableCell>{app.organisation_name}</TableCell>
                     <TableCell>{app.applicant_email}</TableCell>
                     <TableCell className="capitalize">
