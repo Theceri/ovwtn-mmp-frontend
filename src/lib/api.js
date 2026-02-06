@@ -561,5 +561,160 @@ export async function uploadOrganisationLogo(file, authToken = null) {
   }
 }
 
+// ============================================
+// Listing API (requires member auth token)
+// ============================================
+
+/**
+ * Get member's own listings
+ * @param {Object} params - Query parameters (search, category_id, is_active, page, limit)
+ * @param {string} [authToken] - Member JWT token
+ */
+export async function getMemberListings(params = {}, authToken = null) {
+  const searchParams = new URLSearchParams();
+  Object.entries(params).forEach(([key, value]) => {
+    if (value != null && value !== '') {
+      searchParams.append(key, value);
+    }
+  });
+  const query = searchParams.toString();
+  const endpoint = `/member/listings${query ? `?${query}` : ''}`;
+  return apiGet(endpoint, {}, authToken);
+}
+
+/**
+ * Get a single listing by ID
+ * @param {number} listingId - Listing ID
+ * @param {string} [authToken] - Member JWT token
+ */
+export async function getMemberListing(listingId, authToken = null) {
+  return apiGet(`/member/listings/${listingId}`, {}, authToken);
+}
+
+/**
+ * Create a new listing
+ * @param {Object} listingData - Listing data
+ * @param {string} [authToken] - Member JWT token
+ */
+export async function createListing(listingData, authToken = null) {
+  return apiPost('/member/listings', listingData, {}, authToken);
+}
+
+/**
+ * Update a listing
+ * @param {number} listingId - Listing ID
+ * @param {Object} listingData - Fields to update
+ * @param {string} [authToken] - Member JWT token
+ */
+export async function updateListing(listingId, listingData, authToken = null) {
+  return apiPatch(`/member/listings/${listingId}`, listingData, {}, authToken);
+}
+
+/**
+ * Delete a listing
+ * @param {number} listingId - Listing ID
+ * @param {string} [authToken] - Member JWT token
+ */
+export async function deleteListing(listingId, authToken = null) {
+  return apiDelete(`/member/listings/${listingId}`, {}, authToken);
+}
+
+/**
+ * Upload photos for a listing
+ * @param {number} listingId - Listing ID
+ * @param {FileList|File[]} files - Photo files
+ * @param {string} [authToken] - Member JWT token
+ */
+export async function uploadListingPhotos(listingId, files, authToken = null) {
+  const token = authToken || getAuthToken();
+  const formData = new FormData();
+  for (const file of files) {
+    formData.append('files', file);
+  }
+
+  const url = `${API_BASE_URL}/member/listings/${listingId}/photos`;
+  try {
+    const response = await fetch(url, {
+      method: 'POST',
+      body: formData,
+      headers: {
+        ...(token && { Authorization: `Bearer ${token}` }),
+      },
+    });
+    const data = await response.json();
+    if (!response.ok) {
+      throw new ApiError(
+        data.detail || data.message || 'Photo upload failed',
+        response.status,
+        data
+      );
+    }
+    return data;
+  } catch (error) {
+    if (error instanceof ApiError) throw error;
+    throw new ApiError(error.message || 'Photo upload failed', 0, null);
+  }
+}
+
+/**
+ * Delete a photo from a listing
+ * @param {number} listingId - Listing ID
+ * @param {string} photoUrl - URL of the photo to delete
+ * @param {string} [authToken] - Member JWT token
+ */
+export async function deleteListingPhoto(listingId, photoUrl, authToken = null) {
+  const params = new URLSearchParams({ photo_url: photoUrl });
+  return apiDelete(`/member/listings/${listingId}/photos?${params}`, {}, authToken);
+}
+
+/**
+ * Get public categories (no auth required)
+ */
+export async function getPublicCategories() {
+  return apiGet('/public/categories');
+}
+
+// ============================================
+// Admin Category API (requires admin auth token)
+// ============================================
+
+/**
+ * Get all categories (admin view - includes inactive)
+ * @param {boolean} includeInactive - Include inactive categories
+ * @param {string} [authToken] - Admin JWT token
+ */
+export async function getAdminCategories(includeInactive = true, authToken = null) {
+  const params = includeInactive ? '?include_inactive=true' : '';
+  return apiGet(`/admin/categories${params}`, {}, authToken);
+}
+
+/**
+ * Create a category
+ * @param {Object} categoryData - Category data
+ * @param {string} [authToken] - Admin JWT token
+ */
+export async function createCategory(categoryData, authToken = null) {
+  return apiPost('/admin/categories', categoryData, {}, authToken);
+}
+
+/**
+ * Update a category
+ * @param {number} categoryId - Category ID
+ * @param {Object} categoryData - Fields to update
+ * @param {string} [authToken] - Admin JWT token
+ */
+export async function updateCategory(categoryId, categoryData, authToken = null) {
+  return apiPatch(`/admin/categories/${categoryId}`, categoryData, {}, authToken);
+}
+
+/**
+ * Delete a category
+ * @param {number} categoryId - Category ID
+ * @param {string} [authToken] - Admin JWT token
+ */
+export async function deleteCategory(categoryId, authToken = null) {
+  return apiDelete(`/admin/categories/${categoryId}`, {}, authToken);
+}
+
 // Export the base URL for use in other places
 export { API_BASE_URL };
