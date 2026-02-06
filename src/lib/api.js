@@ -1,3 +1,5 @@
+'use client';
+
 /**
  * API utility functions for making requests to the backend
  */
@@ -265,26 +267,6 @@ export async function changePassword(currentPassword, newPassword) {
     current_password: currentPassword,
     new_password: newPassword,
   });
-
-// ============================================
-// Auth API
-// ============================================
-
-/**
- * Request password reset
- */
-export async function requestPasswordReset(email) {
-  return apiPost('/auth/password-reset-request', { email });
-}
-
-/**
- * Reset password with token
- */
-export async function resetPassword(token, newPassword) {
-  return apiPost('/auth/password-reset', {
-    token,
-    new_password: newPassword,
-  });
 }
 
 // ============================================
@@ -343,6 +325,77 @@ export async function getAdminApplications(params = {}, authToken = null) {
   const query = searchParams.toString();
   const endpoint = `/admin/applications${query ? `?${query}` : ''}`;
   return apiGet(endpoint, {}, authToken);
+}
+
+/**
+ * Get application detail by ID
+ * @param {number} applicationId - Application ID
+ * @param {string} [authToken] - Admin JWT token
+ */
+export async function getAdminApplicationDetail(applicationId, authToken = null) {
+  return apiGet(`/admin/applications/${applicationId}`, {}, authToken);
+}
+
+/**
+ * Update admin notes for an application
+ * @param {number} applicationId - Application ID
+ * @param {string} adminNotes - Admin notes text
+ * @param {string} [authToken] - Admin JWT token
+ */
+export async function updateAdminNotes(applicationId, adminNotes, authToken = null) {
+  return apiPatch(`/admin/applications/${applicationId}/notes`, { admin_notes: adminNotes }, {}, authToken);
+}
+
+/**
+ * Download application file (opens in new window)
+ * @param {string} fileType - 'registration_certificate' or 'kra_pin'
+ * @param {number} applicationId - Application ID
+ * @param {string} [authToken] - Admin JWT token
+ */
+export async function downloadAdminFile(fileType, applicationId, authToken = null) {
+  const token = authToken || getAuthToken();
+  const url = `${API_BASE_URL}/admin/files/${fileType}/${applicationId}`;
+  
+  // Create a temporary link and click it to trigger download
+  const link = document.createElement('a');
+  link.href = url;
+  link.style.display = 'none';
+  
+  // Add authorization header via fetch first to get the file
+  try {
+    const response = await fetch(url, {
+      headers: {
+        'Authorization': `Bearer ${token}`,
+      },
+    });
+    
+    if (!response.ok) {
+      throw new Error('Failed to download file');
+    }
+    
+    const blob = await response.blob();
+    const blobUrl = window.URL.createObjectURL(blob);
+    link.href = blobUrl;
+    link.download = `${fileType}_${applicationId}${getFileExtension(response.headers.get('content-type'))}`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    window.URL.revokeObjectURL(blobUrl);
+  } catch (error) {
+    console.error('Download error:', error);
+    throw error;
+  }
+}
+
+function getFileExtension(contentType) {
+  const extensions = {
+    'application/pdf': '.pdf',
+    'image/jpeg': '.jpg',
+    'image/png': '.png',
+    'application/msword': '.doc',
+    'application/vnd.openxmlformats-officedocument.wordprocessingml.document': '.docx',
+  };
+  return extensions[contentType] || '';
 }
 
 // Export the base URL for use in other places

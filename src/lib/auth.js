@@ -1,6 +1,5 @@
 import NextAuth from "next-auth";
 import CredentialsProvider from "next-auth/providers/credentials";
-import { apiPost } from "./api";
 
 /**
  * NextAuth configuration with credentials provider
@@ -20,16 +19,30 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
         }
 
         try {
-          // Call backend login endpoint
-          const response = await apiPost("/login", {
-            email: credentials.email,
-            password: credentials.password,
+          // Call backend login endpoint directly to avoid ES module issues in middleware
+          const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000/api/v1';
+          const response = await fetch(`${API_BASE_URL}/login`, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+              email: credentials.email,
+              password: credentials.password,
+            }),
           });
+
+          if (!response.ok) {
+            const errorData = await response.json().catch(() => ({}));
+            throw new Error(errorData.detail || errorData.message || 'Invalid email or password');
+          }
+
+          const responseData = await response.json();
 
           // Backend should return user data and token
           // Handle different possible response formats
-          const userData = response.user || response;
-          const token = response.access_token || response.token || response.accessToken;
+          const userData = responseData.user || responseData;
+          const token = responseData.access_token || responseData.token || responseData.accessToken;
 
           if (userData && token) {
             return {
