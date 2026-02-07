@@ -13,6 +13,7 @@ export default auth((req) => {
     '/',
     '/login',
     '/apply',
+    '/directory',
     '/api/auth',
   ];
 

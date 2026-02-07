@@ -238,6 +238,38 @@ export async function getMembershipTiers() {
   return apiGet('/public/membership-tiers');
 }
 
+/**
+ * Get public member directory with search, filters, and pagination
+ * @param {Object} params - Query parameters
+ * @param {string} [params.search] - Keyword search
+ * @param {string} [params.tier] - Comma-separated tier slugs (basic,full)
+ * @param {string} [params.sector] - Comma-separated sectors
+ * @param {string} [params.county] - Comma-separated counties
+ * @param {string} [params.category] - Category slug
+ * @param {boolean} [params.has_listings] - Only orgs with active listings
+ * @param {string} [params.sort] - Sort by: name, county, date, relevance
+ * @param {number} [params.page] - Page number
+ * @param {number} [params.limit] - Items per page
+ */
+export async function getPublicDirectory(params = {}) {
+  const searchParams = new URLSearchParams();
+  Object.entries(params).forEach(([key, value]) => {
+    if (value != null && value !== '') {
+      searchParams.append(key, value);
+    }
+  });
+  const query = searchParams.toString();
+  return apiGet(`/public/directory${query ? `?${query}` : ''}`);
+}
+
+/**
+ * Get public organisation profile by ID (includes listings)
+ * @param {number} orgId - Organisation ID
+ */
+export async function getPublicOrganisationProfile(orgId) {
+  return apiGet(`/public/directory/${orgId}`);
+}
+
 // ============================================
 // Auth API
 // ============================================
