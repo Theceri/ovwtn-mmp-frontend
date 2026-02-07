@@ -12,6 +12,8 @@ export default function Navigation() {
     { href: '#membership', label: 'Membership' },
     { href: '#benefits', label: 'Benefits' },
     { href: '/directory', label: 'Directory' },
+    { href: '/resources', label: 'Resources' },
+    { href: '/events', label: 'Events' },
   ];
 
   return (

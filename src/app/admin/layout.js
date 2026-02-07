@@ -12,6 +12,7 @@ const navItems = [
   { href: '/admin/payments', label: 'Payment Verification' },
   { href: '/admin/categories', label: 'Categories' },
   { href: '/admin/resources', label: 'Resources' },
+  { href: '/admin/events', label: 'Events' },
 ];
 
 export default function AdminLayout({ children }) {
