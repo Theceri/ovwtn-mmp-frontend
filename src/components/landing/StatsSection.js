@@ -73,6 +73,13 @@ function StatCard({ label, value, suffix = '', icon, color, delay = 0 }) {
 }
 
 export default function StatsSection({ stats }) {
+  const [mounted, setMounted] = useState(false);
+
+  // Only generate random positions on client after mount
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
   // Default stats - will be replaced by API data when available
   const defaultStats = {
     totalMembers: '200+',
@@ -247,27 +254,29 @@ export default function StatsSection({ stats }) {
                 </div>
               </div>
               
-              {/* Decorative dots representing counties */}
-              <div className="absolute inset-0 p-8">
-                {[...Array(15)].map((_, i) => (
-                  <div
-                    key={i}
-                    className="absolute w-3 h-3 rounded-full animate-pulse"
-                    style={{
-                      backgroundColor: [
-                        'var(--brand-primary)',
-                        'var(--brand-secondary)',
-                        'var(--brand-accent)',
-                        'var(--brand-orange)',
-                      ][i % 4],
-                      top: `${20 + Math.random() * 60}%`,
-                      left: `${10 + Math.random() * 80}%`,
-                      animationDelay: `${i * 0.2}s`,
-                      opacity: 0.6,
-                    }}
-                  />
-                ))}
-              </div>
+              {/* Decorative dots representing counties - client only to avoid hydration mismatch */}
+              {mounted && (
+                <div className="absolute inset-0 p-8">
+                  {[...Array(15)].map((_, i) => (
+                    <div
+                      key={i}
+                      className="absolute w-3 h-3 rounded-full animate-pulse"
+                      style={{
+                        backgroundColor: [
+                          'var(--brand-primary)',
+                          'var(--brand-secondary)',
+                          'var(--brand-accent)',
+                          'var(--brand-orange)',
+                        ][i % 4],
+                        top: `${20 + Math.random() * 60}%`,
+                        left: `${10 + Math.random() * 80}%`,
+                        animationDelay: `${i * 0.2}s`,
+                        opacity: 0.6,
+                      }}
+                    />
+                  ))}
+                </div>
+              )}
             </div>
           </div>
         </div>

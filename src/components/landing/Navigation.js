@@ -11,7 +11,7 @@ export default function Navigation() {
     { href: '#about', label: 'About' },
     { href: '#membership', label: 'Membership' },
     { href: '#benefits', label: 'Benefits' },
-    { href: '#directory', label: 'Directory' },
+    { href: '/directory', label: 'Directory' },
   ];
 
   return (
@@ -41,16 +41,27 @@ export default function Navigation() {
 
           {/* Desktop Navigation */}
           <div className="hidden lg:flex items-center space-x-8">
-            {navLinks.map((link) => (
-              <a
-                key={link.href}
-                href={link.href}
-                className="text-sm font-medium transition-colors hover:opacity-80"
-                style={{ color: 'var(--text-secondary)' }}
-              >
-                {link.label}
-              </a>
-            ))}
+            {navLinks.map((link) =>
+              link.href.startsWith('/') ? (
+                <Link
+                  key={link.href}
+                  href={link.href}
+                  className="text-sm font-medium transition-colors hover:opacity-80"
+                  style={{ color: 'var(--text-secondary)' }}
+                >
+                  {link.label}
+                </Link>
+              ) : (
+                <a
+                  key={link.href}
+                  href={link.href}
+                  className="text-sm font-medium transition-colors hover:opacity-80"
+                  style={{ color: 'var(--text-secondary)' }}
+                >
+                  {link.label}
+                </a>
+              )
+            )}
           </div>
 
           {/* CTA Buttons */}
@@ -97,17 +108,29 @@ export default function Navigation() {
         {mobileMenuOpen && (
           <div className="lg:hidden py-4 border-t border-gray-100">
             <div className="flex flex-col space-y-3">
-              {navLinks.map((link) => (
-                <a
-                  key={link.href}
-                  href={link.href}
-                  onClick={() => setMobileMenuOpen(false)}
-                  className="px-4 py-2 text-sm font-medium rounded-lg hover:bg-gray-50 transition-colors"
-                  style={{ color: 'var(--text-secondary)' }}
-                >
-                  {link.label}
-                </a>
-              ))}
+              {navLinks.map((link) =>
+                link.href.startsWith('/') ? (
+                  <Link
+                    key={link.href}
+                    href={link.href}
+                    onClick={() => setMobileMenuOpen(false)}
+                    className="px-4 py-2 text-sm font-medium rounded-lg hover:bg-gray-50 transition-colors"
+                    style={{ color: 'var(--text-secondary)' }}
+                  >
+                    {link.label}
+                  </Link>
+                ) : (
+                  <a
+                    key={link.href}
+                    href={link.href}
+                    onClick={() => setMobileMenuOpen(false)}
+                    className="px-4 py-2 text-sm font-medium rounded-lg hover:bg-gray-50 transition-colors"
+                    style={{ color: 'var(--text-secondary)' }}
+                  >
+                    {link.label}
+                  </a>
+                )
+              )}
               <div className="pt-3 border-t border-gray-100 space-y-2">
                 <Link
                   href="/login"
