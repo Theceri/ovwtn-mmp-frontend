@@ -748,5 +748,182 @@ export async function deleteCategory(categoryId, authToken = null) {
   return apiDelete(`/admin/categories/${categoryId}`, {}, authToken);
 }
 
+// ============================================
+// Admin Resource API (requires admin auth token)
+// ============================================
+
+/**
+ * List all resources (admin view)
+ * @param {Object} params - Query parameters (search, visibility, category, page, limit)
+ * @param {string} [authToken] - Admin JWT token
+ */
+export async function getAdminResources(params = {}, authToken = null) {
+  const searchParams = new URLSearchParams();
+  Object.entries(params).forEach(([key, value]) => {
+    if (value != null && value !== '') {
+      searchParams.append(key, value);
+    }
+  });
+  const query = searchParams.toString();
+  return apiGet(`/admin/resources${query ? `?${query}` : ''}`, {}, authToken);
+}
+
+/**
+ * Upload a new resource document
+ * @param {Object} data - { file, title, description, visibility, category, tags }
+ * @param {string} [authToken] - Admin JWT token
+ */
+export async function uploadResource(data, authToken = null) {
+  const token = authToken || getAuthToken();
+  const formData = new FormData();
+  formData.append('file', data.file);
+  formData.append('title', data.title);
+  if (data.description) formData.append('description', data.description);
+  formData.append('visibility', data.visibility || 'public');
+  if (data.category) formData.append('category', data.category);
+  if (data.tags) formData.append('tags', data.tags);
+
+  const url = `${API_BASE_URL}/admin/resources`;
+  try {
+    const response = await fetch(url, {
+      method: 'POST',
+      body: formData,
+      headers: {
+        ...(token && { Authorization: `Bearer ${token}` }),
+      },
+    });
+    const result = await response.json();
+    if (!response.ok) {
+      throw new ApiError(
+        result.detail || result.message || 'Upload failed',
+        response.status,
+        result
+      );
+    }
+    return result;
+  } catch (error) {
+    if (error instanceof ApiError) throw error;
+    throw new ApiError(error.message || 'Upload failed', 0, null);
+  }
+}
+
+/**
+ * Update resource metadata
+ * @param {number} resourceId - Resource ID
+ * @param {Object} data - Fields to update (title, description, visibility, category, tags)
+ * @param {string} [authToken] - Admin JWT token
+ */
+export async function updateResource(resourceId, data, authToken = null) {
+  return apiPatch(`/admin/resources/${resourceId}`, data, {}, authToken);
+}
+
+/**
+ * Delete a resource
+ * @param {number} resourceId - Resource ID
+ * @param {string} [authToken] - Admin JWT token
+ */
+export async function deleteResource(resourceId, authToken = null) {
+  return apiDelete(`/admin/resources/${resourceId}`, {}, authToken);
+}
+
+// ============================================
+// Public Resource API (no auth required)
+// ============================================
+
+/**
+ * Get public resources
+ * @param {Object} params - Query parameters (search, category, page, limit)
+ */
+export async function getPublicResources(params = {}) {
+  const searchParams = new URLSearchParams();
+  Object.entries(params).forEach(([key, value]) => {
+    if (value != null && value !== '') {
+      searchParams.append(key, value);
+    }
+  });
+  const query = searchParams.toString();
+  return apiGet(`/public/resources${query ? `?${query}` : ''}`);
+}
+
+/**
+ * Download a public resource
+ * @param {number} resourceId - Resource ID
+ * @param {string} fileName - Original file name for the download
+ */
+export async function downloadPublicResource(resourceId, fileName) {
+  const url = `${API_BASE_URL}/public/resources/${resourceId}/download`;
+  try {
+    const response = await fetch(url);
+    if (!response.ok) {
+      throw new Error('Failed to download file');
+    }
+    const blob = await response.blob();
+    const blobUrl = window.URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = blobUrl;
+    link.download = fileName || 'download';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    window.URL.revokeObjectURL(blobUrl);
+  } catch (error) {
+    console.error('Download error:', error);
+    throw error;
+  }
+}
+
+// ============================================
+// Member Resource API (requires member auth)
+// ============================================
+
+/**
+ * Get member resources (public + member-only)
+ * @param {Object} params - Query parameters (search, category, page, limit)
+ * @param {string} [authToken] - Member JWT token
+ */
+export async function getMemberResources(params = {}, authToken = null) {
+  const searchParams = new URLSearchParams();
+  Object.entries(params).forEach(([key, value]) => {
+    if (value != null && value !== '') {
+      searchParams.append(key, value);
+    }
+  });
+  const query = searchParams.toString();
+  return apiGet(`/member/resources${query ? `?${query}` : ''}`, {}, authToken);
+}
+
+/**
+ * Download a resource (member authenticated)
+ * @param {number} resourceId - Resource ID
+ * @param {string} fileName - Original file name for download
+ * @param {string} [authToken] - Member JWT token
+ */
+export async function downloadMemberResource(resourceId, fileName, authToken = null) {
+  const token = authToken || getAuthToken();
+  const url = `${API_BASE_URL}/member/resources/${resourceId}/download`;
+  try {
+    const response = await fetch(url, {
+      headers: {
+        ...(token && { Authorization: `Bearer ${token}` }),
+      },
+    });
+    if (!response.ok) {
+      throw new Error('Failed to download file');
+    }
+    const blob = await response.blob();
+    const blobUrl = window.URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = blobUrl;
+    link.download = fileName || 'download';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    window.URL.revokeObjectURL(blobUrl);
+  } catch (error) {
+    console.error('Download error:', error);
+    throw error;
+  }
+}
+
 // Export the base URL for use in other places
 export { API_BASE_URL };
