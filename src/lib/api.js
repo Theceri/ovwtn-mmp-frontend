@@ -925,5 +925,144 @@ export async function downloadMemberResource(resourceId, fileName, authToken = n
   }
 }
 
+// ============================================
+// Admin Event API (requires admin auth token)
+// ============================================
+
+/**
+ * List all events (admin view)
+ * @param {Object} params - Query parameters (search, status, is_published, page, limit)
+ * @param {string} [authToken] - Admin JWT token
+ */
+export async function getAdminEvents(params = {}, authToken = null) {
+  const searchParams = new URLSearchParams();
+  Object.entries(params).forEach(([key, value]) => {
+    if (value != null && value !== '') {
+      searchParams.append(key, value);
+    }
+  });
+  const query = searchParams.toString();
+  return apiGet(`/admin/events${query ? `?${query}` : ''}`, {}, authToken);
+}
+
+/**
+ * Get a single event by ID (admin)
+ * @param {number} eventId - Event ID
+ * @param {string} [authToken] - Admin JWT token
+ */
+export async function getAdminEvent(eventId, authToken = null) {
+  return apiGet(`/admin/events/${eventId}`, {}, authToken);
+}
+
+/**
+ * Create a new event
+ * @param {Object} eventData - Event data
+ * @param {string} [authToken] - Admin JWT token
+ */
+export async function createEvent(eventData, authToken = null) {
+  return apiPost('/admin/events', eventData, {}, authToken);
+}
+
+/**
+ * Update an event
+ * @param {number} eventId - Event ID
+ * @param {Object} eventData - Fields to update
+ * @param {string} [authToken] - Admin JWT token
+ */
+export async function updateEvent(eventId, eventData, authToken = null) {
+  return apiPatch(`/admin/events/${eventId}`, eventData, {}, authToken);
+}
+
+/**
+ * Delete an event
+ * @param {number} eventId - Event ID
+ * @param {string} [authToken] - Admin JWT token
+ */
+export async function deleteEvent(eventId, authToken = null) {
+  return apiDelete(`/admin/events/${eventId}`, {}, authToken);
+}
+
+/**
+ * Get registrations for an event (admin)
+ * @param {number} eventId - Event ID
+ * @param {Object} params - Query parameters (page, limit)
+ * @param {string} [authToken] - Admin JWT token
+ */
+export async function getEventRegistrations(eventId, params = {}, authToken = null) {
+  const searchParams = new URLSearchParams();
+  Object.entries(params).forEach(([key, value]) => {
+    if (value != null && value !== '') {
+      searchParams.append(key, value);
+    }
+  });
+  const query = searchParams.toString();
+  return apiGet(`/admin/events/${eventId}/registrations${query ? `?${query}` : ''}`, {}, authToken);
+}
+
+// ============================================
+// Public Event API (no auth required)
+// ============================================
+
+/**
+ * Get public events
+ * @param {Object} params - Query parameters (search, upcoming_only, page, limit)
+ */
+export async function getPublicEvents(params = {}) {
+  const searchParams = new URLSearchParams();
+  Object.entries(params).forEach(([key, value]) => {
+    if (value != null && value !== '') {
+      searchParams.append(key, value);
+    }
+  });
+  const query = searchParams.toString();
+  return apiGet(`/public/events${query ? `?${query}` : ''}`);
+}
+
+// ============================================
+// Member Event API (requires member auth)
+// ============================================
+
+/**
+ * Get member's registered events
+ * @param {Object} params - Query parameters (page, limit)
+ * @param {string} [authToken] - Member JWT token
+ */
+export async function getMemberEvents(params = {}, authToken = null) {
+  const searchParams = new URLSearchParams();
+  Object.entries(params).forEach(([key, value]) => {
+    if (value != null && value !== '') {
+      searchParams.append(key, value);
+    }
+  });
+  const query = searchParams.toString();
+  return apiGet(`/member/events${query ? `?${query}` : ''}`, {}, authToken);
+}
+
+/**
+ * Get list of event IDs the member is registered for
+ * @param {string} [authToken] - Member JWT token
+ */
+export async function getMemberRegisteredEventIds(authToken = null) {
+  return apiGet('/member/events/registered-ids', {}, authToken);
+}
+
+/**
+ * Register for an event
+ * @param {number} eventId - Event ID
+ * @param {string} [authToken] - Member JWT token
+ */
+export async function registerForEvent(eventId, authToken = null) {
+  return apiPost(`/member/events/${eventId}/register`, {}, {}, authToken);
+}
+
+/**
+ * Unregister from an event
+ * @param {number} eventId - Event ID
+ * @param {string} [authToken] - Member JWT token
+ */
+export async function unregisterFromEvent(eventId, authToken = null) {
+  return apiDelete(`/member/events/${eventId}/register`, {}, authToken);
+}
+
 // Export the base URL for use in other places
 export { API_BASE_URL };
