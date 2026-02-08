@@ -426,7 +426,7 @@ export default function AdminResourcesPage() {
       {/* Upload Modal */}
       {showUploadModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50" onClick={() => setShowUploadModal(false)}>
-          <div className="bg-white rounded-xl shadow-xl p-6 w-full max-w-lg mx-4" onClick={(e) => e.stopPropagation()}>
+          <div className="bg-white rounded-xl shadow-xl p-6 w-full max-w-lg mx-4 max-h-[100vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
             <h3 className="text-lg font-semibold mb-5" style={{ color: 'var(--text-primary)' }}>
               Upload New Resource
             </h3>
