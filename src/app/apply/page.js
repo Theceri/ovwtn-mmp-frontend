@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect } from 'react';
+import { useEffect, Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import Image from 'next/image';
@@ -27,7 +27,7 @@ import {
  * Multi-step membership application form
  * Implements the exact flow from wiwimow.md for each membership type
  */
-export default function ApplyPage() {
+function ApplyPageContent() {
   const searchParams = useSearchParams();
   const {
     currentStep,
@@ -292,5 +292,13 @@ export default function ApplyPage() {
         </div>
       </main>
     </div>
+  );
+}
+
+export default function ApplyPage() {
+  return (
+    <Suspense fallback={<div className="min-h-screen flex items-center justify-center">Loading...</div>}>
+      <ApplyPageContent />
+    </Suspense>
   );
 }
