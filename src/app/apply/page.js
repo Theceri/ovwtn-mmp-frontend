@@ -601,4 +601,8 @@ export default function ApplyPage() {
       <ApplyPageContent />
     </Suspense>
   );
+
 }
+
+
+
