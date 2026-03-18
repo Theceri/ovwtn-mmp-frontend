@@ -35,12 +35,12 @@ export default function DashboardPage() {
                   <strong>Organisation ID:</strong> {user.organisation_id}
                 </p>
               )}
-              {isAdmin() && (
+              {isAdmin && (
                 <p className="text-sm" style={{ color: 'var(--brand-primary)' }}>
                   You have admin privileges
                 </p>
               )}
-              {isMember() && (
+              {isMember && (
                 <p className="text-sm" style={{ color: 'var(--brand-secondary)' }}>
                   You are a member
                 </p>
