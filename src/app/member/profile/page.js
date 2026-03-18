@@ -109,7 +109,7 @@ export default function MemberProfilePage() {
             <div className="w-20 h-20 rounded-xl bg-white border-4 border-white shadow-sm flex items-center justify-center overflow-hidden">
               {org?.logo_url ? (
                 <img
-                  src={`http://localhost:8000${org.logo_url}`}
+                  src={`${process.env.NEXT_PUBLIC_BASE_URL}${org.logo_url}`}
                   alt={`${org.name} logo`}
                   className="w-full h-full object-contain"
                 />

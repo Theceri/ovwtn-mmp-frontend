@@ -79,7 +79,7 @@ export default function MemberDashboardPage() {
             </div>
             {org?.logo_url && (
               <img
-                src={`http://localhost:8000${org.logo_url}`}
+                src={`${process.env.NEXT_PUBLIC_BASE_URL}${org.logo_url}`}
                 alt={`${org.name} logo`}
                 className="w-14 h-14 rounded-lg object-contain border"
               />
