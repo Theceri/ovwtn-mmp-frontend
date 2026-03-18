@@ -209,10 +209,10 @@ export default function MemberListingsPage() {
                 <div className="h-40 bg-gray-100 relative">
                   {listing.photos && listing.photos.length > 0 ? (
                     <img
-                      src={`http://localhost:8000${listing.photos[0]}`}
-                      alt={listing.title}
-                      className="w-full h-full object-cover"
-                    />
+                        src={`${process.env.NEXT_PUBLIC_BASE_URL}${listing.photos[0]}`}
+                        alt={listing.title}
+                        className="w-full h-full object-cover"
+                      />
                   ) : (
                     <div className="w-full h-full flex items-center justify-center">
                       <svg className="w-12 h-12" style={{ color: 'var(--text-tertiary)' }} fill="none" stroke="currentColor" viewBox="0 0 24 24">
