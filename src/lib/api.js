@@ -264,10 +264,10 @@ export async function getPublicDirectory(params = {}) {
 
 /**
  * Get public organisation profile by ID (includes listings)
- * @param {number} orgId - Organisation ID
+ * @param {string} slug - Organisation ID
  */
-export async function getPublicOrganisationProfile(orgId) {
-  return apiGet(`/public/directory/${orgId}`);
+export async function getPublicOrganisationProfile(slug) {
+  return apiGet(`/public/directory/${slug}`);
 }
 
 // ============================================
