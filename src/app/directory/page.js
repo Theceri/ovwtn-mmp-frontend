@@ -50,7 +50,7 @@ function OrganisationCard({ org }) {
 
   return (
     <Link
-      href={`/directory/${org.id}`}
+      href={`/directory/${org.slug}`}
       className="group bg-white rounded-xl shadow-sm border overflow-hidden hover:shadow-lg transition-all duration-200 flex flex-col"
     >
       {/* Top section with logo */}

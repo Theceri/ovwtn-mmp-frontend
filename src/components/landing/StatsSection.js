@@ -27,7 +27,8 @@ function useCounter(end, duration = 2000, start = 0) {
 }
 
 function StatCard({ label, value, suffix = '', icon, color, delay = 0 }) {
-  const numericValue = parseInt(value.replace(/[^0-9]/g, '')) || 0;
+  // Add a check to ensure value exists and convert it to a string before replacing
+  const numericValue = parseInt(String(value || '0').replace(/[^0-9]/g, '')) || 0;
   const [count, setHasStarted] = useCounter(numericValue, 2000);
   const [isVisible, setIsVisible] = useState(false);
 
@@ -61,7 +62,7 @@ function StatCard({ label, value, suffix = '', icon, color, delay = 0 }) {
       </div>
       <div className="space-y-1">
         <p className="text-4xl font-bold" style={{ color }}>
-          {value.includes('+') ? count + '+' : count}
+          {String(value || '').includes('+') ? count + '+' : count}
           {suffix}
         </p>
         <p className="text-sm" style={{ color: 'var(--text-tertiary)' }}>
