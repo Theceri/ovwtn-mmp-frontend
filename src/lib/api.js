@@ -706,6 +706,32 @@ export async function getPublicCategories() {
   return apiGet('/public/categories');
 }
 
+
+/**
+ * Get marketplace listings for members
+ * @param {Object} params - Query parameters (search, category_id, county, page, limit)
+ * @param {string} [authToken] - Member JWT token
+ */
+export async function getMemberMarketplaceListings(params = {}, authToken = null) {
+  const searchParams = new URLSearchParams();
+  Object.entries(params).forEach(([key, value]) => {
+    if (value != null && value !== '') {
+      searchParams.append(key, value);
+    }
+  });
+  const query = searchParams.toString();
+  return apiGet(`/member/listings/marketplace${query ? `?${query}` : ''}`, {}, authToken);
+}
+
+/**
+ * Get a single marketplace listing for members
+ * @param {number|string} listingId - Listing ID
+ * @param {string} [authToken] - Member JWT token
+ */
+export async function getMemberMarketplaceListing(listingId, authToken = null) {
+  return apiGet(`/member/listings/${listingId}`, {}, authToken);
+}
+
 // ============================================
 // Admin Category API (requires admin auth token)
 // ============================================
