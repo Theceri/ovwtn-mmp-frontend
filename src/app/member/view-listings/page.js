@@ -424,7 +424,7 @@ export default function MarketplacePage() {
             return (
               <Link
                 key={listing.id}
-                href={`/marketplace/${listing.id}`}
+                href={`/member/view-listings/${listing.id}`}
                 className="bg-white rounded-xl shadow-sm border overflow-hidden hover:shadow-md transition-shadow group"
               >
                 <div className="h-40 bg-gray-100 relative">
