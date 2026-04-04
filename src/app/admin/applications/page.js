@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
+import { useSearchParams } from 'next/navigation';
 import { useAuth } from '@/hooks/useAuth';
 import { getAdminApplications } from '@/lib/api';
 import {
@@ -22,8 +23,9 @@ const TIER_OPTIONS = [
 
 const STATUS_OPTIONS = [
   { value: '', label: 'All Statuses' },
-  { value: 'pending', label: 'Pending' },
-  { value: 'approved', label: 'Approved' },
+  { value: 'pending_ceo_approval', label: 'Pending CEO Approval' },
+  { value: 'approved_awaiting_payment', label: 'Awaiting Payment' },
+  { value: 'fully_approved', label: 'Fully Approved' },
   { value: 'rejected', label: 'Rejected' },
 ];
 
@@ -40,22 +42,37 @@ function formatDate(isoString) {
   }
 }
 
+const STATUS_LABELS = {
+  pending_ceo_approval: 'Pending CEO Approval',
+  approved_awaiting_payment: 'Awaiting Payment',
+  fully_approved: 'Fully Approved',
+  rejected: 'Rejected',
+};
+
 function StatusBadge({ status }) {
   const styles = {
+    pending_ceo_approval: 'bg-amber-100 text-amber-800',
+    approved_awaiting_payment: 'bg-blue-100 text-blue-800',
+    fully_approved: 'bg-green-100 text-green-800',
+    rejected: 'bg-red-100 text-red-800',
+    // Legacy statuses for backward compat
     pending: 'bg-amber-100 text-amber-800',
     approved: 'bg-green-100 text-green-800',
-    rejected: 'bg-red-100 text-red-800',
   };
   const style = styles[status] || 'bg-gray-100 text-gray-800';
+  const label = STATUS_LABELS[status] || status?.replace(/_/g, ' ');
   return (
-    <span className={`inline-flex px-2 py-0.5 rounded-full text-xs font-medium capitalize ${style}`}>
-      {status}
+    <span className={`inline-flex px-2 py-0.5 rounded-full text-xs font-medium ${style}`}>
+      {label}
     </span>
   );
 }
 
 export default function AdminApplicationsPage() {
   const { token } = useAuth();
+  const searchParams = useSearchParams();
+  const initialStatus = searchParams.get('status') || '';
+
   const [applications, setApplications] = useState([]);
   const [total, setTotal] = useState(0);
   const [pages, setPages] = useState(1);
@@ -65,7 +82,7 @@ export default function AdminApplicationsPage() {
   const [error, setError] = useState(null);
 
   // Filters
-  const [status, setStatus] = useState('');
+  const [status, setStatus] = useState(initialStatus);
   const [tier, setTier] = useState('');
   const [county, setCounty] = useState('');
   const [search, setSearch] = useState('');

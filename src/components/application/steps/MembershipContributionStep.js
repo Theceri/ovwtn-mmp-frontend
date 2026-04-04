@@ -99,7 +99,7 @@ export default function MembershipContributionStep() {
                 <span className="text-white text-xs font-bold">2</span>
               </div>
               <span className="text-sm" style={{ color: 'var(--text-secondary)' }}>
-                The Secretariat will review your application
+                The CEO will manually review your application
               </span>
             </li>
             <li className="flex items-start space-x-3">
@@ -110,7 +110,7 @@ export default function MembershipContributionStep() {
                 <span className="text-white text-xs font-bold">3</span>
               </div>
               <span className="text-sm" style={{ color: 'var(--text-secondary)' }}>
-                You&apos;ll receive payment instructions via email
+                Once approved, you&apos;ll receive payment instructions via email
               </span>
             </li>
             <li className="flex items-start space-x-3">
@@ -121,7 +121,7 @@ export default function MembershipContributionStep() {
                 <span className="text-white text-xs font-bold">4</span>
               </div>
               <span className="text-sm" style={{ color: 'var(--text-secondary)' }}>
-                Once payment is verified, your membership will be activated
+                After payment is verified, your membership will be activated
               </span>
             </li>
           </ul>
