@@ -269,6 +269,8 @@ export default function MarketplacePage() {
   const [totalPages, setTotalPages] = useState(1);
   const [search, setSearch] = useState('');
   const [categoryFilter, setCategoryFilter] = useState('');
+  const [memberTier, setMemberTier] = useState(null);
+  const [allowedVisibility, setAllowedVisibility] = useState([]);
 
   // Load categories once
   useEffect(() => {
@@ -312,9 +314,15 @@ export default function MarketplacePage() {
       setListings(data.items || []);
       setTotal(data.total || 0);
       setTotalPages(data.pages || 1);
+      setMemberTier(data.member_tier || null);
+      setAllowedVisibility(data.allowed_visibility || []);
     } catch (error) {
       console.error('Failed to load marketplace listings:', error);
-      toast.error(error.message || 'Failed to load marketplace');
+      if (error.status === 403) {
+        toast.error(error.message || 'Your membership tier does not have marketplace access.');
+      } else {
+        toast.error(error.message || 'Failed to load marketplace');
+      }
     } finally {
       setLoading(false);
     }
@@ -367,6 +375,30 @@ export default function MarketplacePage() {
           </p>
         </div>
       </div>
+
+      {/* Tier Access Banner */}
+      {memberTier && !allowedVisibility.includes('paid_tier_only') && (
+        <div className="bg-amber-50 border border-amber-200 rounded-xl p-4 flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <div className="w-8 h-8 bg-amber-100 rounded-lg flex items-center justify-center text-amber-600">
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+            </div>
+            <p className="text-sm text-amber-800">
+              Your <span className="font-semibold capitalize">{memberTier}</span> membership shows{' '}
+              {allowedVisibility.includes('members_only') ? 'public and members-only' : 'public'} listings.
+              Upgrade to see all premium listings.
+            </p>
+          </div>
+          <Link
+            href="/member/upgrade"
+            className="text-xs font-semibold text-amber-700 bg-amber-100 hover:bg-amber-200 px-3 py-1.5 rounded-lg transition-colors whitespace-nowrap"
+          >
+            Upgrade
+          </Link>
+        </div>
+      )}
 
       {/* Filters */}
       <div className="bg-white rounded-xl shadow-sm border p-4">
