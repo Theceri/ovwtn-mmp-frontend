@@ -724,27 +724,13 @@ export async function getMemberMarketplaceListings(params = {}, authToken = null
 }
 
 /**
- * Get a single marketplace listing for members
-//  * @param {number|string} listingId - Listing ID
-//  * @param {string} [authToken] - Member JWT token
+ * Get a single marketplace listing for members (tier-restricted)
+ * @param {number|string} listingId - Listing ID
+ * @param {string} [authToken] - Member JWT token
  */
-export const getMarketplaceListingDetail = async (id, token) => {
-  const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/member/listings/marketplace/${id}`, {
-    method: 'GET',
-    headers: {
-      'Authorization': `Bearer ${token}`,
-      'Content-Type': 'application/json',
-    },
-  });
-
-  if (!response.ok) {
-    const error = await response.json();
-    throw new Error(error.detail || 'Failed to fetch listing');
-  }
-
-  return response.json();
-};
-
+export async function getMarketplaceListingDetail(listingId, authToken = null) {
+  return apiGet(`/member/listings/marketplace/${listingId}`, {}, authToken);
+}
 // ============================================
 // Admin Category API (requires admin auth token)
 // ============================================
