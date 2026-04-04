@@ -68,7 +68,7 @@ export default function EmailStep() {
               What happens next?
             </p>
             <p className="text-sm" style={{ color: 'var(--text-secondary)' }}>
-              After completing the form, your application will be reviewed by the OVWTN Secretariat. 
+              After completing the form, your application will be reviewed by the OVWTN CEO. 
               You&apos;ll receive a confirmation email and be notified of the decision.
             </p>
           </div>

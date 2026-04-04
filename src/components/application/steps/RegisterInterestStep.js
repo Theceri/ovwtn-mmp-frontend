@@ -74,8 +74,9 @@ export default function RegisterInterestStep() {
             Would you like to register your interest?
           </h3>
           <p className="text-sm mb-6" style={{ color: 'var(--text-secondary)' }}>
-            Today&apos;s contribution is <strong>KES 2,500</strong>. This can be converted to a basic or 
+            The contribution is <strong>KES 2,500</strong>. This can be converted to a basic or 
             full membership within 3 months by contributing the difference in membership fees.
+            Payment instructions will be sent to you after your application is reviewed and approved.
           </p>
           
           {/* Radio Options */}
@@ -140,97 +141,19 @@ export default function RegisterInterestStep() {
               </span>
             </label>
           </div>
-          
-          {/* Payment Section - Only show if Yes selected */}
+
+          {/* Payment notice */}
           {formData.registerInterest === true && (
-            <div className="space-y-6 pt-6 border-t border-gray-200">
-              <h4 className="font-semibold" style={{ color: 'var(--text-primary)' }}>
-                Payment Details
-              </h4>
-              
-              {/* Payment Mode Selection */}
-              <div>
-                <label className="block text-sm font-medium mb-3" style={{ color: 'var(--text-primary)' }}>
-                  Payment Mode <span className="text-red-500">*</span>
-                </label>
-                <div className="grid sm:grid-cols-2 gap-4">
-                  {/* M-Pesa */}
-                  <label
-                    className={`relative flex flex-col p-4 rounded-xl border-2 cursor-pointer transition-all ${
-                      formData.paymentMode === 'mpesa'
-                        ? 'border-[var(--brand-accent)] bg-[var(--brand-accent)]/5'
-                        : 'border-gray-200 hover:border-gray-300'
-                    }`}
-                  >
-                    <input
-                      type="radio"
-                      name="paymentMode"
-                      value="mpesa"
-                      checked={formData.paymentMode === 'mpesa'}
-                      onChange={(e) => updateField('paymentMode', e.target.value)}
-                      className="sr-only"
-                    />
-                    <span className="font-semibold mb-2" style={{ color: 'var(--text-primary)' }}>
-                      M-Pesa Paybill
-                    </span>
-                    <div className="text-sm space-y-1" style={{ color: 'var(--text-secondary)' }}>
-                      <p><strong>Paybill Number:</strong> 303030</p>
-                      <p><strong>Account:</strong> DEZB#{formData.organisationName || '[association name]'}</p>
-                    </div>
-                  </label>
-                  
-                  {/* Cheque */}
-                  <label
-                    className={`relative flex flex-col p-4 rounded-xl border-2 cursor-pointer transition-all ${
-                      formData.paymentMode === 'cheque'
-                        ? 'border-[var(--brand-accent)] bg-[var(--brand-accent)]/5'
-                        : 'border-gray-200 hover:border-gray-300'
-                    }`}
-                  >
-                    <input
-                      type="radio"
-                      name="paymentMode"
-                      value="cheque"
-                      checked={formData.paymentMode === 'cheque'}
-                      onChange={(e) => updateField('paymentMode', e.target.value)}
-                      className="sr-only"
-                    />
-                    <span className="font-semibold mb-2" style={{ color: 'var(--text-primary)' }}>
-                      Cheque
-                    </span>
-                    <div className="text-sm" style={{ color: 'var(--text-secondary)' }}>
-                      <p><strong>Made out to:</strong></p>
-                      <p>ONE VOICE WOMEN TRADE NETWORK CLG LTD</p>
-                    </div>
-                  </label>
-                </div>
+            <div className="p-4 rounded-xl bg-amber-50 border border-amber-200">
+              <div className="flex items-start space-x-3">
+                <svg className="w-5 h-5 text-amber-600 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+                <p className="text-sm text-amber-800">
+                  <strong>No payment is required now.</strong> Once your application is reviewed and approved by the CEO, 
+                  you will receive an email with payment instructions and a link to confirm your payment.
+                </p>
               </div>
-              
-              {/* Payment Reference */}
-              {formData.paymentMode && (
-                <div>
-                  <label className="block text-sm font-medium mb-2" style={{ color: 'var(--text-primary)' }}>
-                    {formData.paymentMode === 'mpesa' 
-                      ? 'M-Pesa Confirmation Code' 
-                      : 'Cheque Reference Number'
-                    } <span className="text-red-500">*</span>
-                  </label>
-                  <input
-                    type="text"
-                    value={formData.paymentReference}
-                    onChange={(e) => updateField('paymentReference', e.target.value.toUpperCase())}
-                    placeholder={formData.paymentMode === 'mpesa' ? 'e.g., QK123ABC456' : 'e.g., CHQ-001234'}
-                    className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-[var(--brand-primary)]/20 focus:border-[var(--brand-primary)] outline-none transition-all"
-                    required
-                  />
-                  <p className="mt-2 text-sm" style={{ color: 'var(--text-tertiary)' }}>
-                    {formData.paymentMode === 'mpesa'
-                      ? 'Enter the confirmation code you received after making the M-Pesa payment'
-                      : 'Enter the reference number from your cheque'
-                    }
-                  </p>
-                </div>
-              )}
             </div>
           )}
         </div>

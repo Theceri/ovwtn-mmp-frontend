@@ -54,6 +54,14 @@ export default function ConfirmationStep() {
           </div>
         )}
         
+        {/* Notice */}
+        <div className="p-4 rounded-xl bg-amber-50 border border-amber-200 mb-8">
+          <p className="text-sm text-amber-800 font-medium">
+            Your application has been received. The CEO will manually review your details. 
+            You will receive payment instructions once approved.
+          </p>
+        </div>
+
         {/* What's Next */}
         <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100 text-left mb-8">
           <h2 className="font-semibold mb-4" style={{ color: 'var(--text-primary)' }}>
@@ -85,10 +93,10 @@ export default function ConfirmationStep() {
               </div>
               <div>
                 <p className="text-sm font-medium" style={{ color: 'var(--text-primary)' }}>
-                  Application Review
+                  CEO Review
                 </p>
                 <p className="text-sm" style={{ color: 'var(--text-secondary)' }}>
-                  The Secretariat will review your application within 5-7 business days
+                  The CEO will manually review your application details
                 </p>
               </div>
             </li>
@@ -101,10 +109,26 @@ export default function ConfirmationStep() {
               </div>
               <div>
                 <p className="text-sm font-medium" style={{ color: 'var(--text-primary)' }}>
-                  Decision Notification
+                  Payment Instructions
                 </p>
                 <p className="text-sm" style={{ color: 'var(--text-secondary)' }}>
-                  You&apos;ll be notified of the decision and next steps via email
+                  Once approved, you&apos;ll receive payment instructions via email (M-Pesa or cheque)
+                </p>
+              </div>
+            </li>
+            <li className="flex items-start space-x-3">
+              <div 
+                className="w-6 h-6 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5"
+                style={{ backgroundColor: 'var(--brand-secondary)' }}
+              >
+                <span className="text-white text-xs font-bold">4</span>
+              </div>
+              <div>
+                <p className="text-sm font-medium" style={{ color: 'var(--text-primary)' }}>
+                  Membership Activation
+                </p>
+                <p className="text-sm" style={{ color: 'var(--text-secondary)' }}>
+                  After payment verification, your membership will be activated and you&apos;ll receive login credentials
                 </p>
               </div>
             </li>
@@ -114,7 +138,7 @@ export default function ConfirmationStep() {
         {/* Contact Info */}
         <div className="p-4 rounded-xl bg-blue-50 border border-blue-200 mb-8">
           <p className="text-sm text-blue-800">
-            Questions? Contact the Secretariat at{' '}
+            Questions? Contact the CEO at{' '}
             <a href="mailto:info@onevoice.ke" className="font-medium underline">
               info@onevoice.ke
             </a>{' '}

@@ -261,11 +261,6 @@ export const useApplicationStore = create(
           case 'membership-contribution':
             return true; // Info page, always can continue
           case 'register-interest':
-            // Can skip payment or provide payment details
-            if (formData.registerInterest === false) return true;
-            if (formData.registerInterest === true) {
-              return formData.paymentMode && formData.paymentReference;
-            }
             return formData.registerInterest !== null;
           case 'key-issues':
             return true; // All fields optional

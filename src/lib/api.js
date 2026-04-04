@@ -408,12 +408,31 @@ export async function rejectApplication(applicationId, rejectionData, authToken 
 }
 
 /**
- * Reverse a rejection, setting application back to pending
+ * Reverse a rejection, setting application back to pending CEO approval
  * @param {number} applicationId - Application ID
  * @param {string} [authToken] - Admin JWT token
  */
 export async function reverseRejection(applicationId, authToken = null) {
   return apiPost(`/admin/applications/${applicationId}/reverse-rejection`, {}, {}, authToken);
+}
+
+/**
+ * Confirm payment received and fully activate membership.
+ * Creates org + user, generates receipt, sends completion email.
+ * @param {number} applicationId - Application ID
+ * @param {string} [authToken] - Admin JWT token
+ */
+export async function confirmPaymentAndActivate(applicationId, authToken = null) {
+  return apiPost(`/admin/applications/${applicationId}/confirm-payment`, {}, {}, authToken);
+}
+
+/**
+ * Submit payment proof for an approved application (public, no auth).
+ * @param {string} applicationNumber - Application number (e.g. OVWTN-20260404-ABC123)
+ * @param {Object} paymentData - { payment_mode, payment_reference, amount }
+ */
+export async function submitApplicationPayment(applicationNumber, paymentData) {
+  return apiPost(`/applications/${applicationNumber}/submit-payment`, paymentData);
 }
 
 /**

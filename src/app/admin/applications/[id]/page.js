@@ -4,19 +4,32 @@ import { useState, useEffect } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { useAuth } from '@/hooks/useAuth';
-import { getAdminApplicationDetail, updateAdminNotes, downloadAdminFile, verifyPayment, approveApplication, rejectApplication, getRejectionReasons, reverseRejection } from '@/lib/api';
+import { getAdminApplicationDetail, updateAdminNotes, downloadAdminFile, verifyPayment, approveApplication, rejectApplication, getRejectionReasons, reverseRejection, confirmPaymentAndActivate } from '@/lib/api';
 import { toast } from 'sonner';
+
+const STATUS_LABELS = {
+  pending_ceo_approval: 'Pending CEO Approval',
+  approved_awaiting_payment: 'Awaiting Payment',
+  fully_approved: 'Fully Approved',
+  rejected: 'Rejected',
+  pending: 'Pending',
+  approved: 'Approved',
+};
 
 function StatusBadge({ status }) {
   const styles = {
+    pending_ceo_approval: 'bg-amber-100 text-amber-800',
+    approved_awaiting_payment: 'bg-blue-100 text-blue-800',
+    fully_approved: 'bg-green-100 text-green-800',
+    rejected: 'bg-red-100 text-red-800',
     pending: 'bg-amber-100 text-amber-800',
     approved: 'bg-green-100 text-green-800',
-    rejected: 'bg-red-100 text-red-800',
   };
   const style = styles[status] || 'bg-gray-100 text-gray-800';
+  const label = STATUS_LABELS[status] || status?.replace(/_/g, ' ');
   return (
-    <span className={`inline-flex px-3 py-1 rounded-full text-sm font-medium capitalize ${style}`}>
-      {status}
+    <span className={`inline-flex px-3 py-1 rounded-full text-sm font-medium ${style}`}>
+      {label}
     </span>
   );
 }
@@ -200,6 +213,7 @@ export default function ApplicationDetailPage() {
   const [rejectionReasons, setRejectionReasons] = useState([]);
   const [processing, setProcessing] = useState(false);
   const [showApproveConfirm, setShowApproveConfirm] = useState(false);
+  const [showPaymentConfirm, setShowPaymentConfirm] = useState(false);
 
   useEffect(() => {
     if (!token || !applicationId) return;
@@ -271,15 +285,34 @@ export default function ApplicationDetailPage() {
     try {
       const result = await approveApplication(applicationId, token);
       setShowApproveConfirm(false);
-      const emailMsg = result.email_sent
-        ? ` Confirmation email sent to ${result.applicant_email}.`
-        : ' Note: Confirmation email could not be sent.';
-      toast.success(`Application approved successfully.${emailMsg}`);
-      // Refresh application data
+      const emailMsg = result.email_queued
+        ? ` Payment instructions email sent to ${result.applicant_email}.`
+        : '';
+      toast.success(`Application approved. Awaiting payment.${emailMsg}`);
       const data = await getAdminApplicationDetail(applicationId, token);
       setApplication(data);
     } catch (err) {
       toast.error(err.message || 'Failed to approve application');
+    } finally {
+      setProcessing(false);
+    }
+  };
+
+  const handleConfirmPayment = async () => {
+    if (!token) return;
+    
+    setProcessing(true);
+    try {
+      const result = await confirmPaymentAndActivate(applicationId, token);
+      setShowPaymentConfirm(false);
+      const emailMsg = result.email_queued
+        ? ` Credentials and receipt sent to ${result.applicant_email}.`
+        : '';
+      toast.success(`Payment confirmed. Membership fully activated!${emailMsg}`);
+      const data = await getAdminApplicationDetail(applicationId, token);
+      setApplication(data);
+    } catch (err) {
+      toast.error(err.message || 'Failed to confirm payment');
     } finally {
       setProcessing(false);
     }
@@ -381,14 +414,32 @@ export default function ApplicationDetailPage() {
         </div>
         <div className="flex items-center gap-4">
           <StatusBadge status={application.status} />
-          {application.status === 'pending' && (
+          {application.status === 'pending_ceo_approval' && (
             <div className="flex gap-2">
               <button
                 onClick={() => setShowApproveConfirm(true)}
                 disabled={processing}
                 className="px-4 py-2 rounded-lg text-sm font-medium text-white bg-green-600 hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                Approve
+                Approve Application
+              </button>
+              <button
+                onClick={() => setShowRejectionModal(true)}
+                disabled={processing}
+                className="px-4 py-2 rounded-lg text-sm font-medium text-white bg-red-600 hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                Reject
+              </button>
+            </div>
+          )}
+          {application.status === 'approved_awaiting_payment' && (
+            <div className="flex gap-2">
+              <button
+                onClick={() => setShowPaymentConfirm(true)}
+                disabled={processing}
+                className="px-4 py-2 rounded-lg text-sm font-medium text-white bg-green-600 hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                Confirm Payment Received
               </button>
               <button
                 onClick={() => setShowRejectionModal(true)}
@@ -595,12 +646,12 @@ export default function ApplicationDetailPage() {
         initialStatus={verificationModalStatus}
       />
 
-      {/* Approval Confirmation Modal */}
+      {/* CEO Approval Confirmation Modal */}
       {showApproveConfirm && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
           <div className="bg-white rounded-lg shadow-xl max-w-md w-full mx-4 p-6" style={{ backgroundColor: 'var(--background)' }}>
             <h3 className="text-lg font-semibold mb-4" style={{ color: 'var(--text-primary)' }}>
-              Confirm Approval
+              Approve Application
             </h3>
             
             <div className="mb-4 space-y-2 text-sm" style={{ color: 'var(--text-secondary)' }}>
@@ -612,10 +663,12 @@ export default function ApplicationDetailPage() {
               </div>
               <p>This will:</p>
               <ul className="list-disc list-inside space-y-1 ml-2">
-                <li>Create an Organisation record</li>
-                <li>Create a member account with a temporary password</li>
-                <li>Send an approval email with login credentials</li>
+                <li>Mark the application as approved, awaiting payment</li>
+                <li>Send payment instructions email to the applicant</li>
               </ul>
+              <p className="text-xs italic mt-2">
+                The member account will be created after payment is verified.
+              </p>
             </div>
 
             <div className="flex gap-3 justify-end">
@@ -632,7 +685,65 @@ export default function ApplicationDetailPage() {
                 disabled={processing}
                 className="px-4 py-2 rounded-lg text-sm font-medium text-white bg-green-600 hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                {processing ? 'Approving...' : 'Confirm Approval'}
+                {processing ? 'Approving...' : 'Approve & Send Payment Instructions'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Payment Confirmation Modal */}
+      {showPaymentConfirm && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
+          <div className="bg-white rounded-lg shadow-xl max-w-md w-full mx-4 p-6" style={{ backgroundColor: 'var(--background)' }}>
+            <h3 className="text-lg font-semibold mb-4" style={{ color: 'var(--text-primary)' }}>
+              Confirm Payment Received
+            </h3>
+            
+            <div className="mb-4 space-y-2 text-sm" style={{ color: 'var(--text-secondary)' }}>
+              <p>You are confirming payment for:</p>
+              <div className="p-3 bg-gray-50 rounded-lg space-y-1">
+                <p><span className="font-medium" style={{ color: 'var(--text-primary)' }}>Organisation:</span> {application.organisation_name}</p>
+                <p><span className="font-medium" style={{ color: 'var(--text-primary)' }}>Applicant:</span> {application.applicant_email}</p>
+                <p><span className="font-medium" style={{ color: 'var(--text-primary)' }}>Tier:</span> {application.membership_type?.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}</p>
+              </div>
+
+              {application.payment_proof && (
+                <div className="p-3 bg-blue-50 rounded-lg space-y-1">
+                  <p className="font-medium" style={{ color: 'var(--text-primary)' }}>Payment Proof on File:</p>
+                  <p>Type: {application.payment_proof.payment_type?.toUpperCase()}</p>
+                  <p>Reference: {application.payment_proof.payment_reference}</p>
+                  {application.payment_proof.amount > 0 && (
+                    <p>Amount: KES {parseFloat(application.payment_proof.amount).toLocaleString()}</p>
+                  )}
+                </div>
+              )}
+
+              <p>This will:</p>
+              <ul className="list-disc list-inside space-y-1 ml-2">
+                <li>Mark the membership as fully approved</li>
+                <li>Create the Organisation record</li>
+                <li>Create a member account with temporary credentials</li>
+                <li>Generate a payment receipt</li>
+                <li>Send credentials and receipt to the applicant</li>
+              </ul>
+            </div>
+
+            <div className="flex gap-3 justify-end">
+              <button
+                onClick={() => setShowPaymentConfirm(false)}
+                disabled={processing}
+                className="px-4 py-2 rounded-lg text-sm font-medium border disabled:opacity-50 disabled:cursor-not-allowed"
+                style={{ borderColor: 'var(--input-border)', color: 'var(--text-primary)' }}
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleConfirmPayment}
+                disabled={processing}
+                className="px-4 py-2 rounded-lg text-sm font-medium text-white bg-green-600 hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {processing ? 'Processing...' : 'Confirm Payment & Activate'}
               </button>
             </div>
           </div>
