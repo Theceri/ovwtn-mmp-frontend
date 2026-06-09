@@ -5,14 +5,18 @@ import { persist } from 'zustand/middleware';
  * Application form state management
  * Manages the multi-step membership application form with conditional routing
  * 
- * Form flows based on membership type:
- * 
- * FULL/BASIC: Email → BasicInfo → Eligibility(3 steps) → AssociationDetails → 
- *             MembershipContribution → RegisterInterest(optional) → KeyIssues → Submit
- * 
- * ASSOCIATE: Email → BasicInfo → Submit
- * 
- * REGISTERING_INTEREST: Email → BasicInfo → RegisterInterest → KeyIssues → Submit
+ * Form flows based on membership type. The membership selection comes first so
+ * applicants understand their options before committing, and for Full/Basic the
+ * eligibility pre-screen runs before any personal/organisation details are
+ * collected (so applicants can confirm they qualify before sharing data):
+ *
+ * FULL/BASIC: MembershipSelect → Eligibility(3 steps) → Email → BasicInfo →
+ *             AssociationDetails → MembershipContribution → RegisterInterest(optional) →
+ *             KeyIssues → Submit
+ *
+ * ASSOCIATE: MembershipSelect → Email → BasicInfo → Submit
+ *
+ * REGISTERING_INTEREST: MembershipSelect → Email → BasicInfo → RegisterInterest → KeyIssues → Submit
  */
 
 const initialFormData = {
@@ -136,81 +140,84 @@ export const useApplicationStore = create(
       
       // Get the step map based on membership type
       getStepMap: () => {
-        const { membershipType, isAssociation, isRegistered, representsWomenInTrade, registerInterest } = get().formData;
-        
-        // Base steps for all
+        const { membershipType, isAssociation, isRegistered, representsWomenInTrade } = get().formData;
+
+        // Step 1 for everyone: choose a membership so options are understood before committing
         const steps = [
+          { id: 'membership-select', title: 'Membership', description: 'Choose your membership' },
+        ];
+
+        // Until a membership type is selected, only show the selection step
+        if (!membershipType) {
+          return steps;
+        }
+
+        // Data-collection steps, shared across flows
+        const dataSteps = [
           { id: 'email', title: 'Email', description: 'Enter your email address' },
           { id: 'basic-info', title: 'Basic Information', description: 'Organisation details' },
         ];
-        
-        // Associate has simplified flow
+
+        // Steps shown when an applicant is directed to register their interest
+        const registerInterestSteps = [
+          { id: 'register-interest', title: 'Register Interest', description: 'Payment details' },
+          { id: 'key-issues', title: 'Key Issues', description: 'Share your priorities' },
+          { id: 'submit', title: 'Submit', description: 'Review and submit' },
+        ];
+
+        // Associate has simplified flow (no eligibility pre-screen)
         if (membershipType === 'associate') {
           steps.push(
+            ...dataSteps,
             { id: 'submit', title: 'Submit', description: 'Review and submit' }
           );
           return steps;
         }
-        
-        // Registering Interest flow
+
+        // Registering Interest flow (no eligibility pre-screen)
         if (membershipType === 'registering_interest') {
-          steps.push(
-            { id: 'register-interest', title: 'Register Interest', description: 'Payment details' },
-            { id: 'key-issues', title: 'Key Issues', description: 'Share your priorities' },
-            { id: 'submit', title: 'Submit', description: 'Review and submit' }
-          );
+          steps.push(...dataSteps, ...registerInterestSteps);
           return steps;
         }
-        
-        // Full/Basic flow
+
+        // Full/Basic flow: eligibility pre-screen runs BEFORE collecting any details
         if (membershipType === 'full' || membershipType === 'basic') {
           steps.push(
             { id: 'eligibility-1', title: 'Eligibility', description: 'Association check' },
           );
-          
-          // If they said No to association, skip to register interest
+
+          // If they said No to association, collect details then register interest
           if (isAssociation === false) {
-            steps.push(
-              { id: 'register-interest', title: 'Register Interest', description: 'Payment details' },
-              { id: 'key-issues', title: 'Key Issues', description: 'Share your priorities' },
-              { id: 'submit', title: 'Submit', description: 'Review and submit' }
-            );
+            steps.push(...dataSteps, ...registerInterestSteps);
             return steps;
           }
-          
+
           if (isAssociation === true) {
             steps.push(
               { id: 'eligibility-2', title: 'Registration', description: 'Registration check' },
             );
-            
-            // If they said No to registered, skip to register interest
+
+            // If they said No to registered, collect details then register interest
             if (isRegistered === false) {
-              steps.push(
-                { id: 'register-interest', title: 'Register Interest', description: 'Payment details' },
-                { id: 'key-issues', title: 'Key Issues', description: 'Share your priorities' },
-                { id: 'submit', title: 'Submit', description: 'Review and submit' }
-              );
+              steps.push(...dataSteps, ...registerInterestSteps);
               return steps;
             }
-            
+
             if (isRegistered === true) {
               steps.push(
                 { id: 'eligibility-3', title: 'Membership', description: 'Membership check' },
               );
-              
-              // If they said No to women in trade, skip to register interest
+
+              // If they said No to women in trade, collect details then register interest
               if (representsWomenInTrade === false) {
-                steps.push(
-                  { id: 'register-interest', title: 'Register Interest', description: 'Payment details' },
-                  { id: 'key-issues', title: 'Key Issues', description: 'Share your priorities' },
-                  { id: 'submit', title: 'Submit', description: 'Review and submit' }
-                );
+                steps.push(...dataSteps, ...registerInterestSteps);
                 return steps;
               }
-              
+
               // All eligibility passed - full flow
               if (representsWomenInTrade === true) {
                 steps.push(
+                  ...dataSteps,
                   { id: 'association-details', title: 'Association Details', description: 'Your organisation' },
                   { id: 'membership-contribution', title: 'Contribution', description: 'Payment info' },
                   { id: 'register-interest', title: 'Register Interest', description: 'Payment details' },
@@ -222,7 +229,7 @@ export const useApplicationStore = create(
             }
           }
         }
-        
+
         return steps;
       },
       
@@ -239,14 +246,15 @@ export const useApplicationStore = create(
         const currentStepInfo = get().getCurrentStepInfo();
         
         switch (currentStepInfo.id) {
+          case 'membership-select':
+            return !!formData.membershipType;
           case 'email':
             return formData.email && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email);
           case 'basic-info':
-            return formData.organisationName && 
-                   formData.county && 
-                   formData.telephone && 
-                   formData.emailAddress && 
-                   formData.membershipType;
+            return formData.organisationName &&
+                   formData.county &&
+                   formData.telephone &&
+                   formData.emailAddress;
           case 'eligibility-1':
             return formData.isAssociation !== null;
           case 'eligibility-2':

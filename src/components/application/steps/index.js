@@ -1,3 +1,4 @@
+export { default as MembershipSelectStep } from './MembershipSelectStep';
 export { default as EmailStep } from './EmailStep';
 export { default as BasicInfoStep } from './BasicInfoStep';
 export { default as EligibilityStep1 } from './EligibilityStep1';

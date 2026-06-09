@@ -161,9 +161,9 @@ export default function MemberEventsPage() {
     <div className="space-y-6">
       {/* Header */}
       <div>
-        <h1 className="text-2xl font-bold" style={{ color: 'var(--text-primary)' }}>Events</h1>
+        <h1 className="text-2xl font-bold" style={{ color: 'var(--text-primary)' }}>Your Events</h1>
         <p className="text-sm mt-1" style={{ color: 'var(--text-secondary)' }}>
-          Browse upcoming events and manage your registrations
+          Browse your upcoming events and manage your registrations
         </p>
       </div>
 
@@ -176,7 +176,7 @@ export default function MemberEventsPage() {
           }`}
           style={{ color: 'var(--text-primary)' }}
         >
-          Upcoming Events
+          Your Upcoming Events
         </button>
         <button
           onClick={() => setTab('registered')}

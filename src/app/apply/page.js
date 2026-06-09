@@ -310,6 +310,7 @@ import { apiPost, ApiError } from '@/lib/api';
 import FormProgress from '@/components/application/FormProgress';
 import FormNavigation from '@/components/application/FormNavigation';
 import {
+  MembershipSelectStep,
   EmailStep,
   BasicInfoStep,
   EligibilityStep1,
@@ -375,6 +376,8 @@ function ApplyPageContent() {
     }
 
     switch (currentStepInfo?.id) {
+      case 'membership-select':
+        return <MembershipSelectStep />;
       case 'email':
         return <EmailStep />;
       case 'basic-info':
@@ -396,7 +399,7 @@ function ApplyPageContent() {
       case 'submit':
         return <SubmitStep />;
       default:
-        return <EmailStep />;
+        return <MembershipSelectStep />;
     }
   };
 
