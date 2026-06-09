@@ -5,6 +5,7 @@ import Link from 'next/link';
 const tiers = [
   {
     name: 'Registering Interest',
+    slug: 'registering-interest',
     price: '2,500',
     registrationFee: '10,000',
     period: '6 months',
@@ -24,6 +25,7 @@ const tiers = [
   },
   {
     name: 'Basic',
+    slug: 'basic',
     price: '5,000',
     registrationFee: '10,000',
     period: '12 months',
@@ -43,6 +45,7 @@ const tiers = [
   },
   {
     name: 'Full',
+    slug: 'full',
     price: '10,000',
     registrationFee: '10,000',
     period: '12 months',
@@ -63,6 +66,7 @@ const tiers = [
   },
   {
     name: 'Associate / Affiliate',
+    slug: 'associate',
     price: 'Free',
     registrationFee: 'Waived',
     period: 'No expiry',
@@ -214,7 +218,7 @@ export default function MembershipTiers() {
 
                 {/* CTA */}
                 <Link
-                  href={`/apply?tier=${tier.name.toLowerCase().replace(/[^a-z]/g, '-')}`}
+                  href={`/apply?tier=${tier.slug}`}
                   className={`block w-full py-3 px-4 text-center font-semibold rounded-xl transition-all ${
                     tier.highlight 
                       ? 'text-white hover:opacity-90 shadow-lg hover:shadow-xl' 

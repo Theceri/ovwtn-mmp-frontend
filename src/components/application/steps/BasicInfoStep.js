@@ -13,36 +13,17 @@ const KENYA_COUNTIES = [
   'Uasin Gishu', 'Vihiga', 'Wajir', 'West Pokot'
 ];
 
-const MEMBERSHIP_TYPES = [
-  {
-    value: 'full',
-    label: 'Full Membership',
-    description: 'KES 10,000/year + KES 10,000 registration. All benefits including voting rights.',
-    price: '10,000',
-  },
-  {
-    value: 'basic',
-    label: 'Basic Membership',
-    description: 'KES 5,000/year + KES 10,000 registration. All benefits except voting rights.',
-    price: '5,000',
-  },
-  {
-    value: 'associate',
-    label: 'Associate / Affiliate',
-    description: 'No fee. For ecosystem stakeholders, corporates, apex bodies, and trade support institutions.',
-    price: 'Free',
-  },
-  {
-    value: 'registering_interest',
-    label: 'Registering Interest',
-    description: 'KES 2,500 for 6 months. Stay updated and convert to Basic/Full membership within 3 months.',
-    price: '2,500',
-  },
-];
+const MEMBERSHIP_LABELS = {
+  full: 'Full Membership',
+  basic: 'Basic Membership',
+  associate: 'Associate / Affiliate',
+  registering_interest: 'Registering Interest',
+};
 
 /**
- * Step 2: Basic Information + Membership Type Selection
- * Common for all membership types
+ * Basic Information
+ * Common for all membership types. The membership tier is chosen earlier in the
+ * flow, so here we only collect the organisation's details.
  */
 export default function BasicInfoStep() {
   const { formData, updateField } = useApplicationStore();
@@ -201,69 +182,31 @@ export default function BasicInfoStep() {
         </div>
       </div>
       
-      {/* Membership Type Selection */}
-      <div className="pt-6 border-t border-gray-200">
-        <label className="block text-sm font-medium mb-4" style={{ color: 'var(--text-primary)' }}>
-          Which type of membership are you interested in? <span className="text-red-500">*</span>
-        </label>
-        
-        <div className="grid sm:grid-cols-2 gap-4">
-          {MEMBERSHIP_TYPES.map((type) => (
-            <label
-              key={type.value}
-              className={`relative flex flex-col p-4 rounded-xl border-2 cursor-pointer transition-all ${
-                formData.membershipType === type.value
-                  ? 'border-[var(--brand-primary)] bg-[var(--brand-primary)]/5'
-                  : 'border-gray-200 hover:border-gray-300'
-              }`}
-            >
-              <input
-                type="radio"
-                name="membershipType"
-                value={type.value}
-                checked={formData.membershipType === type.value}
-                onChange={(e) => updateField('membershipType', e.target.value)}
-                className="sr-only"
-              />
-              
-              {/* Radio indicator */}
-              <div className="flex items-start space-x-3">
-                <div 
-                  className={`w-5 h-5 rounded-full border-2 flex items-center justify-center flex-shrink-0 mt-0.5 ${
-                    formData.membershipType === type.value
-                      ? 'border-[var(--brand-primary)]'
-                      : 'border-gray-300'
-                  }`}
-                >
-                  {formData.membershipType === type.value && (
-                    <div className="w-2.5 h-2.5 rounded-full bg-[var(--brand-primary)]" />
-                  )}
-                </div>
-                
-                <div className="flex-1">
-                  <div className="flex items-center justify-between">
-                    <span className="font-semibold" style={{ color: 'var(--text-primary)' }}>
-                      {type.label}
-                    </span>
-                    <span 
-                      className="text-sm font-medium px-2 py-0.5 rounded-full"
-                      style={{ 
-                        backgroundColor: type.price === 'Free' ? 'rgba(145, 162, 123, 0.2)' : 'rgba(150, 32, 33, 0.1)',
-                        color: type.price === 'Free' ? 'var(--brand-accent)' : 'var(--brand-primary)',
-                      }}
-                    >
-                      {type.price === 'Free' ? 'Free' : `KES ${type.price}`}
-                    </span>
-                  </div>
-                  <p className="text-sm mt-1" style={{ color: 'var(--text-secondary)' }}>
-                    {type.description}
-                  </p>
-                </div>
+      {/* Selected Membership (chosen in the first step) */}
+      {formData.membershipType && (
+        <div className="pt-6 border-t border-gray-200">
+          <div className="flex items-center justify-between p-4 rounded-xl bg-[var(--brand-primary)]/5 border border-[var(--brand-primary)]/20">
+            <div className="flex items-center space-x-3">
+              <div
+                className="w-9 h-9 rounded-full flex items-center justify-center flex-shrink-0"
+                style={{ backgroundColor: 'rgba(150, 32, 33, 0.1)' }}
+              >
+                <svg className="w-5 h-5" style={{ color: 'var(--brand-primary)' }} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
               </div>
-            </label>
-          ))}
+              <div>
+                <p className="text-xs font-medium uppercase tracking-wide" style={{ color: 'var(--text-tertiary)' }}>
+                  Selected Membership
+                </p>
+                <p className="font-semibold" style={{ color: 'var(--text-primary)' }}>
+                  {MEMBERSHIP_LABELS[formData.membershipType] || formData.membershipType}
+                </p>
+              </div>
+            </div>
+          </div>
         </div>
-      </div>
+      )}
     </div>
   );
 }
